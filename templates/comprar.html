@@ -1,0 +1,78 @@
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 400px;
+    margin: auto;
+}
+
+.card {
+    background: #1e293b;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #22c55e;
+    color: white;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    margin-top: 5px;
+}
+
+a {
+    text-decoration: none;
+}
+</style><!DOCTYPE html>
+<html>
+<head>
+<title>Pagamento</title>
+
+<style>
+/* cole o estilo aqui */
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<div class="card">
+    <h2>{{ nome }}</h2>
+    <p>{{responsavel}}</p>
+
+    <p><strong>Pix:</strong></p>
+    <p style="word-break: break-all;">{{ barraca.pix }}</p>
+</div>
+
+<form method="post">
+
+<label>Valor</label>
+<input name="valor" type="number" step="0.01">
+
+<button type="submit">Já paguei</button>
+
+</form>
+
+</div>
+
+</body>
+</html>

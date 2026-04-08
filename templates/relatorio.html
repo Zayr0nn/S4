@@ -1,0 +1,75 @@
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 400px;
+    margin: auto;
+}
+
+.card {
+    background: #1e293b;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #22c55e;
+    color: white;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    margin-top: 5px;
+}
+
+a {
+    text-decoration: none;
+}
+</style><!DOCTYPE html>
+<html>
+<head>
+<title>Relatório</title>
+
+<style>
+/* cole o estilo aqui */
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h2>📊 Relatório</h2>
+
+{% for nome, b in barracas.items() %}
+<div class="card">
+    <h3>{{ nome }}</h3>
+    <p>R$ {{ b.total }}</p>
+</div>
+{% endfor %}
+
+<div class="card">
+    <h2>Total Geral</h2>
+    <h1>R$ {{ total_geral }}</h1>
+</div>
+
+</div>
+
+</body>
+</html>
