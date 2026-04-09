@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pagar - {{ barraca.nome_barraca }}</title>
+    <style>
+        :root { --green: #22c55e; --dark: #0f172a; --card: #1e293b; --text: #f8fafc; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: var(--text); margin: 0; padding: 15px; }
+        .container { width: 100%; max-width: 450px; margin: auto; }
+        .card { background: var(--card); padding: 20px; border-radius: 18px; margin-bottom: 15px; text-align: center; }
+        input, button { width: 100%; height: 52px; border-radius: 12px; border: none; font-size: 16px; margin-top: 10px; box-sizing: border-box; text-align: center; }
+        input { background: var(--dark); color: white; border: 1px solid #334155; }
+        button { background: var(--green); color: white; font-weight: bold; cursor: pointer; }
+        .pix-box { background: var(--dark); padding: 15px; border-radius: 10px; font-family: monospace; color: var(--green); margin: 15px 0; word-break: break-all; }
+        .star { cursor: pointer; font-size: 35px; color: #334155; transition: 0.2s; }
+        .star.selected, .star.selected ~ .star, .star:hover, .star:hover ~ .star { color: #fbbf24; }
+        .rating { display: flex; flex-direction: row-reverse; justify-content: center; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="/" style="color: #94a3b8; text-decoration: none;">← Voltar para Feira</a>
+    
+    <div class="card" style="margin-top: 15px;">
+        <h2 style="color: var(--green); margin: 0;">{{ barraca.nome_barraca }}</h2>
+        <p style="color: #94a3b8; font-size: 14px; margin-top: 5px;">
+            {{ barraca.turma }} | Prof. {{ barraca.professor_responsavel }}
+        </p>
+        
+        <div class="pix-box">{{ barraca.pix }}</div>
+        
+        <form method="POST">
+            <input type="number" name="valor" step="0.01" placeholder="Valor: R$ 0,00" required>
+            <button type="submit">Confirmar Pagamento</button>
+        </form>
+    </div>
+
+    {% if current_user.tipo == 'cliente' %}
+    <div class="card">
+        <p>Gostou do atendimento?</p>
+        <div class="rating">
+            <span class="star" data-value="5">★</span>
+            <span class="star" data-value="4">★</span>
+            <span class="star" data-value="3">★</span>
+            <span class="star" data-value="2">★</span>
+            <span class="star" data-value="1">★</span>
+        </div>
+        <p id="feedback" style="display:none; color: var(--green); margin-top: 10px;">Obrigado por avaliar! ❤️</p>
+    </div>
+    {% else %}
+    <div class="card">
+        <p style="color: #94a3b8; font-size: 14px;">Apenas clientes podem avaliar as barracas.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    document.querySelectorAll('.star').forEach(star => {
+        star.onclick = function() {
+            const nota = this.getAttribute('data-value');
+            fetch(`/avaliar/{{ barraca.id }}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({estrelas: nota})
+            }).then(response => {
+                if(response.ok) {
+                    document.querySelectorAll('.star').forEach(s => s.classList.remove('selected'));
+                    this.classList.add('selected');
+                    document.getElementById('feedback').style.display = 'block';
+                    document.querySelector('.rating').style.pointerEvents = 'none';
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>

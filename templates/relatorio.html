@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório Geral - FeiraPay</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #22c55e;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 15px 20px;
+            margin: 10px 0;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #334155;
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #f8fafc;
+        }
+
+        .valor-barraca {
+            font-weight: bold;
+            color: #22c55e;
+            font-size: 18px;
+        }
+
+        .total-geral-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 30px;
+            margin-top: 30px;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid #22c55e;
+        }
+
+        .total-geral-card h2 {
+            margin: 0;
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .total-geral-card h1 {
+            margin: 10px 0 0 0;
+            font-size: 42px;
+            color: #22c55e;
+        }
+
+        .btn-voltar {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h2>📊 Relatório de Vendas</h2>
+
+    {# --- INÍCIO DO LOOP --- #}
+    {% for barraca in barracas %}
+    <div class="card">
+        <div>
+            <h3>{{ barraca.nome_barraca }}</h3>
+            <small style="color: #64748b;">Responsável: {{ barraca.responsavel }}</small>
+        </div>
+        <span class="valor-barraca">
+            R$ {{ "%.2f"|format(barraca.vendas|sum(attribute='valor')) }}
+        </span>
+    </div>
+    {% else %}
+    <div class="card" style="justify-content: center;">
+        <p style="color: #64748b;">Nenhuma venda registrada.</p>
+    </div>
+    {% endfor %} 
+    {# --- FIM DO LOOP (Onde estava o erro) --- #}
+
+    <div class="total-geral-card">
+        <h2>Volume Total da Feira</h2>
+        <h1>R$ {{ "%.2f"|format(total_geral) }}</h1>
+    </div>
+
+    <a href="/" class="btn-voltar">← Voltar para o Início</a>
+
+</div>
+
+</body>
+</html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+    :root { --green: #22c55e; --dark: #0f172a; --card: #1e293b; --text: #f8fafc; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: var(--text); margin: 0; padding: 15px; -webkit-tap-highlight-color: transparent; }
+    .container { width: 100%; max-width: 480px; margin: auto; }
+    .card { background: var(--card); padding: 20px; border-radius: 18px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    input, select, button { width: 100%; height: 52px; border-radius: 12px; border: 1px solid #334155; background: var(--dark); color: white; font-size: 16px; margin-top: 10px; box-sizing: border-box; padding: 0 15px; }
+    button { background: var(--green); border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    button:active { transform: scale(0.96); }
+    .star { cursor: pointer; font-size: 35px; color: #334155; }
+    .star.active { color: #fbbf24; }
+    a { text-decoration: none; color: inherit; }
+</style>

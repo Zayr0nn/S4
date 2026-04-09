@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Painel - FeiraPay</title>
+    <style>
+        :root { --green: #22c55e; --dark: #0f172a; --card: #1e293b; --text: #f8fafc; }
+        body { font-family: sans-serif; background: var(--dark); color: var(--text); padding: 15px; margin: 0; }
+        .container { max-width: 500px; margin: auto; }
+        .card { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .valor { font-size: 24px; color: var(--green); font-weight: bold; }
+        .estrela { color: #fbbf24; font-size: 24px; }
+        .lista-vendas { margin-top: 20px; }
+        .venda-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #334155; }
+        .btn-logout { color: #ef4444; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>{{ current_user.nome_barraca }}</h2>
+            <a href="/logout" class="btn-logout">Sair</a>
+        </div>
+        <p style="margin-top: -10px; color: #94a3b8;">{{ current_user.turma }} | Prof. {{ current_user.professor_responsavel }}</p>
+
+        <div class="grid">
+            <div class="card">
+                <small>TOTAL GANHO</small><br>
+                <span class="valor">R$ {{ "%.2f"|format(total) }}</span>
+            </div>
+            <div class="card">
+                <small>AVALIAÇÃO</small><br>
+                <span class="estrela">⭐ {{ "%.1f"|format(media) }}</span>
+            </div>
+        </div>
+
+        <h3>Histórico de Vendas</h3>
+        <div class="card">
+            {% for venda in vendas|reverse %}
+            <div class="venda-item">
+                <span>Venda #{{ venda.id }}</span>
+                <strong>R$ {{ "%.2f"|format(venda.valor) }}</strong>
+            </div>
+            {% else %}
+            <p style="color: #94a3b8;">Nenhuma venda realizada ainda.</p>
+            {% endfor %}
+        </div>
+        
+        <a href="/" style="color: var(--green); text-decoration: none; font-size: 14px;">← Voltar para a Lista de Barracas</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Login - SalesHub</title>
+    <style>
+        :root { 
+            --primary: #22c55e; 
+            --primary-dark: #16a34a;
+            --bg: #020617; 
+            --card: #1e293b; 
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        body { 
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 20px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container { 
+            width: 100%; 
+            max-width: 400px; 
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .brand-header { text-align: center; margin-bottom: 25px; }
+
+        .logo-box {
+            background: linear-gradient(135deg, var(--primary), #10b981);
+            width: 50px; height: 50px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 10px;
+            box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.3);
+        }
+
+        h1 { 
+            font-size: 26px; font-weight: 800; margin: 0;
+            background: linear-gradient(to right, #ffffff, #94a3b8);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .card { 
+            background: var(--card); padding: 25px; border-radius: 20px; 
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-label {
+            font-size: 11px; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-top: 15px; margin-bottom: 8px; display: block;
+        }
+
+        input { 
+            width: 100%; height: 52px; border-radius: 12px; border: 1px solid var(--border); 
+            background: var(--bg); color: white; font-size: 16px; 
+            margin-bottom: 15px; box-sizing: border-box; padding: 0 15px;
+            font-family: inherit;
+        }
+
+        input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+        .password-container { position: relative; }
+        .toggle-password { 
+            position: absolute; right: 15px; top: 14px; 
+            cursor: pointer; font-size: 20px; user-select: none; color: var(--text-muted);
+        }
+
+        button { 
+            width: 100%; height: 55px; background: var(--primary); color: #052e16; 
+            border: none; border-radius: 12px; font-weight: 800; font-size: 16px; 
+            margin-top: 10px; cursor: pointer; transition: 0.2s; 
+        }
+
+        button:hover { background: var(--primary-dark); }
+        button:active { transform: scale(0.97); }
+
+        .flash { 
+            color: #fca5a5; background: rgba(239, 68, 68, 0.1); 
+            padding: 12px; border-radius: 12px; text-align: center; 
+            margin-bottom: 20px; font-size: 14px; border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .footer-link {
+            display: block; text-align: center; margin-top: 20px;
+            color: var(--text-muted); font-size: 14px; text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="brand-header">
+        <div class="logo-box">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                <polyline points="10 17 15 12 10 7"></polyline>
+                <line x1="15" y1="12" x2="3" y2="12"></line>
+            </svg>
+        </div>
+        <h1>SalesHub</h1>
+        <p style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">Acesse sua conta para continuar</p>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="flash">⚠️ {{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <form method="POST">
+            <span class="section-label">Acesso</span>
+            <input type="text" name="username" placeholder="Nome de usuário" required>
+
+            <span class="section-label">Senha</span>
+            <div class="password-container">
+                <input type="password" name="senha" id="senha" placeholder="Sua senha secreta" required>
+                <span class="toggle-password" onclick="togglePasswordVisibility()" id="toggleIcon">👁️</span>
+            </div>
+
+            <button type="submit">Entrar no Painel</button>
+        </form>
+        
+        <a href="/cadastro" class="footer-link">Não tem uma conta? <span style="color: var(--primary); font-weight: bold;">Cadastrar-se</span></a>
+    </div>
+</div>
+
+<script>
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('senha');
+        const icon = document.getElementById('toggleIcon');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.textContent = '🙈';
+        } else {
+            passwordInput.type = 'password';
+            icon.textContent = '👁️';
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,20 @@
+<form method="POST">
+    {% for p in produtos %}
+    <div class="card">
+        <div style="display: flex; justify-content: space-between;">
+            <h3>{{ p.nome }}</h3>
+            <span style="color: var(--primary); font-weight: bold;">R$ {{ "%.2f"|format(p.preco) }}</span>
+        </div>
+        <p>{{ p.descricao }}</p>
+        
+        <div style="display: flex; align-items: center; gap: 15px; margin-top: 10px;">
+            <span class="section-label" style="margin:0">Quantidade:</span>
+            <input type="number" name="qtd_{{ p.id }}" value="0" min="0" style="width: 80px; margin:0">
+        </div>
+    </div>
+    {% endfor %}
+
+    <button type="submit" style="position: sticky; bottom: 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.5);">
+        🛒 Finalizar Pedido
+    </button>
+</form>
