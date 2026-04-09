@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cadastro - SalesHub</title>
+    <title>Login - SalesHub</title>
     <style>
         :root { 
             --primary: #22c55e; 
@@ -23,12 +23,14 @@
             padding: 20px; 
             display: flex;
             justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             -webkit-tap-highlight-color: transparent;
         }
 
         .container { 
             width: 100%; 
-            max-width: 450px; 
+            max-width: 400px; 
             animation: fadeIn 0.5s ease;
         }
 
@@ -52,7 +54,7 @@
 
         .card { 
             background: var(--card); padding: 25px; border-radius: 20px; 
-            margin-bottom: 15px; border: 1px solid var(--border);
+            border: 1px solid var(--border);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
@@ -62,19 +64,25 @@
             margin-top: 15px; margin-bottom: 8px; display: block;
         }
 
-        input, select { 
+        input { 
             width: 100%; height: 52px; border-radius: 12px; border: 1px solid var(--border); 
             background: var(--bg); color: white; font-size: 16px; 
             margin-bottom: 15px; box-sizing: border-box; padding: 0 15px;
             font-family: inherit;
         }
 
-        input:focus, select:focus { outline: 2px solid var(--primary); border-color: transparent; }
+        input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+        .password-container { position: relative; }
+        .toggle-password { 
+            position: absolute; right: 15px; top: 14px; 
+            cursor: pointer; font-size: 20px; user-select: none; color: var(--text-muted);
+        }
 
         button { 
             width: 100%; height: 55px; background: var(--primary); color: #052e16; 
             border: none; border-radius: 12px; font-weight: 800; font-size: 16px; 
-            margin-top: 20px; cursor: pointer; transition: 0.2s; 
+            margin-top: 10px; cursor: pointer; transition: 0.2s; 
         }
 
         button:hover { background: var(--primary-dark); }
@@ -84,13 +92,6 @@
             color: #fca5a5; background: rgba(239, 68, 68, 0.1); 
             padding: 12px; border-radius: 12px; text-align: center; 
             margin-bottom: 20px; font-size: 14px; border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        /* Olhinho da Senha */
-        .password-container { position: relative; }
-        .toggle-password { 
-            position: absolute; right: 15px; top: 14px; 
-            cursor: pointer; font-size: 20px; user-select: none; 
         }
 
         .footer-link {
@@ -105,14 +106,13 @@
     <div class="brand-header">
         <div class="logo-box">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="8.5" cy="7" r="4"></circle>
-                <line x1="20" y1="8" x2="20" y2="14"></line>
-                <line x1="23" y1="11" x2="17" y2="11"></line>
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                <polyline points="10 17 15 12 10 7"></polyline>
+                <line x1="15" y1="12" x2="3" y2="12"></line>
             </svg>
         </div>
         <h1>SalesHub</h1>
-        <p style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">Crie sua conta para a feira</p>
+        <p style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">Acesse sua conta para continuar</p>
     </div>
 
     {% with messages = get_flashed_messages() %}
@@ -125,57 +125,23 @@
 
     <div class="card">
         <form method="POST">
-            <span class="section-label">Tipo de Perfil</span>
-            <select name="tipo" id="tipoSelect" onchange="toggleForm()">
-                <option value="cliente">👤 Quero apenas comprar</option>
-                <option value="vendedor">🏪 Tenho uma Barraca (Vendedor)</option>
-            </select>
-
             <span class="section-label">Acesso</span>
             <input type="text" name="username" placeholder="Nome de usuário" required>
 
+            <span class="section-label">Senha</span>
             <div class="password-container">
-                <input type="password" name="senha" id="senha" placeholder="Senha secreta" required>
+                <input type="password" name="senha" id="senha" placeholder="Sua senha secreta" required>
                 <span class="toggle-password" onclick="togglePasswordVisibility()" id="toggleIcon">👁️</span>
             </div>
 
-            <div id="camposVendedor" style="display: none; border-top: 1px solid var(--border); margin-top: 10px; padding-top: 15px;">
-                <span class="section-label">Detalhes da Unidade</span>
-                <input type="text" name="nome" id="nome_barraca" placeholder="Nome da sua Barraca">
-                <input type="text" name="turma" id="turma" placeholder="Sua Turma (Ex: 3º Ano A)">
-
-                <span class="section-label">Responsável</span>
-                <select name="professor" id="professor">
-                    <option value="" disabled selected>Professor(a) Responsável</option>
-                    {% for prof in professores %}
-                    <option value="{{ prof }}">{{ prof }}</option>
-                    {% endfor %}
-                </select>
-
-                <span class="section-label">Financeiro</span>
-                <input type="text" name="pix" id="pix" placeholder="Sua Chave PIX">
-            </div>
-
-            <button type="submit">Finalizar Cadastro</button>
+            <button type="submit">Entrar no Painel</button>
         </form>
         
-        <a href="/login" class="footer-link">Já tem uma conta? <span style="color: var(--primary); font-weight: bold;">Entrar</span></a>
+        <a href="/cadastro" class="footer-link">Não tem uma conta? <span style="color: var(--primary); font-weight: bold;">Cadastrar-se</span></a>
     </div>
 </div>
 
 <script>
-    function toggleForm() {
-        const isVendedor = document.getElementById('tipoSelect').value === 'vendedor';
-        const campos = document.getElementById('camposVendedor');
-        campos.style.display = isVendedor ? 'block' : 'none';
-        
-        // Ativa/Desativa a obrigatoriedade dos campos
-        const fields = ['nome_barraca', 'turma', 'professor', 'pix'];
-        fields.forEach(id => {
-            document.getElementById(id).required = isVendedor;
-        });
-    }
-
     function togglePasswordVisibility() {
         const passwordInput = document.getElementById('senha');
         const icon = document.getElementById('toggleIcon');
@@ -187,9 +153,6 @@
             icon.textContent = '👁️';
         }
     }
-
-    // Inicializa o estado ao carregar
-    toggleForm();
 </script>
 
 </body>

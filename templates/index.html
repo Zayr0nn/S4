@@ -1,72 +1,193 @@
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background: #0f172a;
-    color: white;
-    margin: 0;
-    padding: 20px;
-}
-
-.container {
-    max-width: 400px;
-    margin: auto;
-}
-
-.card {
-    background: #1e293b;
-    padding: 15px;
-    margin: 10px 0;
-    border-radius: 15px;
-}
-
-button {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 10px;
-    background: #22c55e;
-    color: white;
-    font-size: 16px;
-    margin-top: 10px;
-}
-
-input {
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: none;
-    margin-top: 5px;
-}
-
-a {
-    text-decoration: none;
-}
-</style><!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="pt-br">
 <head>
-<title>FeiraPay</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SalesHub - Início</title>
+    <style>
+        :root { 
+            --primary: #22c55e; 
+            --primary-dark: #16a34a;
+            --gold: #fbbf24;
+            --bg: #020617; 
+            --card: #1e293b; 
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
 
-<style>
-/* cole o estilo aqui */
-</style>
+        body { 
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 20px; 
+            display: flex;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
 
+        .container { 
+            width: 100%; 
+            max-width: 450px; 
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .brand-header { text-align: center; margin-bottom: 25px; }
+
+        .logo-box {
+            background: linear-gradient(135deg, var(--primary), #10b981);
+            width: 50px; height: 50px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 10px;
+            box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.3);
+        }
+
+        h1 { 
+            font-size: 26px; font-weight: 800; margin: 0;
+            background: linear-gradient(to right, #ffffff, #94a3b8);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .user-status {
+            background: rgba(30, 41, 59, 0.5);
+            padding: 10px 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            border: 1px dashed var(--border);
+        }
+
+        .nav-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
+
+        button, .btn { 
+            width: 100%; height: 50px; border-radius: 12px; border: none; 
+            background: var(--primary); color: #052e16; 
+            font-size: 15px; font-weight: 700; cursor: pointer; 
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+            text-decoration: none;
+        }
+
+        button:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        button:active { transform: scale(0.98); }
+
+        .btn-secondary { background: var(--card); color: var(--text-main); border: 1px solid var(--border); }
+
+        .section-label {
+            font-size: 11px; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 12px; display: block;
+        }
+
+        .ranking-card { 
+            background: linear-gradient(145deg, #1e293b, #0f172a); 
+            padding: 15px 20px;
+            border-radius: 20px;
+            border: 1px solid var(--gold);
+            margin-bottom: 30px;
+        }
+
+        .ranking-item { 
+            display: flex; 
+            align-items: center; 
+            padding: 10px 0; 
+            border-bottom: 1px solid rgba(255,255,255,0.05); 
+        }
+
+        .ranking-item:last-child { border-bottom: none; }
+
+        .rank-pos { font-weight: 900; color: var(--gold); width: 35px; font-size: 18px; }
+        .rank-info { flex: 1; }
+        .rank-name { display: block; font-weight: 600; font-size: 14px; }
+        .rank-turma { font-size: 11px; color: var(--text-muted); }
+        .rank-value { font-weight: 700; color: var(--primary); font-size: 14px; }
+
+        .card { 
+            background: var(--card); padding: 20px; border-radius: 20px; 
+            margin-bottom: 15px; border: 1px solid var(--border);
+        }
+
+        .card h3 { margin: 0; font-size: 18px; color: var(--text-main); }
+        .card .badge { 
+            display: inline-block; background: var(--bg); color: var(--primary);
+            font-size: 11px; padding: 4px 8px; border-radius: 6px; margin-top: 8px;
+            font-weight: bold; border: 1px solid var(--primary);
+        }
+        .card p { margin: 12px 0 18px 0; color: var(--text-muted); font-size: 14px; line-height: 1.4; }
+
+        .logout-link { color: #ef4444; font-weight: bold; text-decoration: none; }
+    </style>
 </head>
 <body>
 
 <div class="container">
 
-<h1>💰 FeiraPay</h1>
+    <div class="brand-header">
+        <div class="logo-box">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+        </div>
+        <h1>SalesHub</h1>
+    </div>
 
-<a href="/cadastro"><button>+ Nova Barraca</button></a>
-<a href="/relatorio"><button>📊 Ver Relatório</button></a>
+    <div class="user-status">
+        {% if current_user.is_authenticated %}
+            <span>🟢 <b>{{ current_user.username }}</b></span>
+            <a href="/logout" class="logout-link">Sair</a>
+        {% else %}
+            <span>⚪ Visitante</span>
+            <a href="/login" style="color: var(--primary); text-decoration: none; font-weight: bold;">Entrar</a>
+        {% endif %}
+    </div>
 
-{% for nome, b in barracas.items() %}
-<div class="card">
-    <h3>{{ nome }}</h3>
-    <p>{{ b.responsavel }}</p>
-    <a href="/comprar/{{ nome }}"><button>Comprar</button></a>
-</div>
-{% endfor %}
+    <div class="nav-buttons">
+        {% if not current_user.is_authenticated %}
+            <a href="/cadastro" style="grid-column: span 2;"><button>Criar Minha Conta</button></a>
+        {% elif current_user.tipo == 'vendedor' %}
+            <a href="/meus-produtos"><button class="btn-secondary">📦 Produtos</button></a>
+            <a href="/dashboard"><button>📊 Painel</button></a>
+        {% endif %}
+    </div>
+
+    <span class="section-label">🏆 Top 5 Faturamento</span>
+    <div class="ranking-card">
+        {% for item in ranking %}
+        <div class="ranking-item">
+            <div class="rank-pos">{{ loop.index }}º</div>
+            <div class="rank-info">
+                <span class="rank-name">{{ item.nome_barraca }}</span>
+                <span class="rank-turma">{{ item.turma }}</span>
+            </div>
+            <div class="rank-value">R$ {{ "%.2f"|format(item.total) }}</div>
+        </div>
+        {% else %}
+        <p style="text-align: center; color: var(--text-muted); font-size: 13px; margin: 10px 0;">
+            Aguardando vendas confirmadas...
+        </p>
+        {% endfor %}
+    </div>
+
+    <span class="section-label">🏪 Unidades da Feira</span>
+
+    {% for barraca in barracas %}
+    <div class="card">
+        <h3>{{ barraca.nome_barraca }}</h3>
+        <div class="badge">{{ barraca.turma }}</div>
+        <p>Responsável: <b>Prof. {{ barraca.professor_responsavel }}</b></p>
+        
+        <a href="/barraca/{{ barraca.id }}">
+            <button>Ver Cardápio & Pagar</button>
+        </a>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 40px 0;">
+        <p style="color: var(--text-muted);">Nenhuma unidade ativa no momento.</p>
+    </div>
+    {% endfor %}
 
 </div>
 

@@ -1,0 +1,20 @@
+<div class="card">
+    <span class="section-label">Novo Produto</span>
+    <form method="POST">
+        <input type="text" name="nome" placeholder="Nome do item (ex: Coxinha)" required>
+        <input type="number" name="preco" step="0.01" placeholder="Preço (R$)" required>
+        <input type="text" name="descricao" placeholder="Pequena descrição">
+        <button type="submit">Adicionar ao Cardápio</button>
+    </form>
+</div>
+
+<span class="section-label">Meus Itens</span>
+{% for p in produtos %}
+<div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h4 style="margin:0">{{ p.nome }}</h4>
+        <small style="color:var(--primary)">R$ {{ "%.2f"|format(p.preco) }}</small>
+    </div>
+    <a href="/deletar-produto/{{ p.id }}" style="color:#ef4444">Remover</a>
+</div>
+{% endfor %}
