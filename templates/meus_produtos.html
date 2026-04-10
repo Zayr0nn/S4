@@ -3,186 +3,417 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meus Produtos - SalesHub</title>
+    <title>Meus Produtos — SalesHub</title>
     <style>
-        :root { 
-            --primary: #22c55e; 
-            --primary-dark: #16a34a;
-            --bg: #020617; 
-            --card: #1e293b; 
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #13131a;
+            --surface2: #1c1c26;
+            --border: rgba(255,255,255,0.07);
+            --border2: rgba(255,255,255,0.12);
+            --accent: #7c6ef7;
+            --green: #22c55e;
+            --green-dim: rgba(34,197,94,0.12);
+            --text: #f1f0ff;
+            --muted: #6e6a8a;
+            --muted2: #9e9bb8;
             --danger: #ef4444;
+            --danger-dim: rgba(239,68,68,0.08);
         }
 
-        body { 
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
-            background: var(--bg); 
-            color: var(--text-main); 
-            margin: 0; 
-            padding: 20px; 
-            display: flex;
-            justify-content: center;
-        }
-
-        .container { 
-            width: 100%; 
-            max-width: 450px; 
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .brand-header { text-align: center; margin-bottom: 25px; }
-        
-        h1 { 
-            font-size: 24px; font-weight: 800; margin: 0;
-            background: linear-gradient(to right, #ffffff, #94a3b8);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-
-        /* Estilização dos Formulários e Inputs */
-        .form-group { margin-bottom: 15px; }
-        
-        input {
-            width: 100%;
-            padding: 12px 15px;
+        body {
+            font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
             background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: white;
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 12px; }
+
+        .logo-icon {
+            width: 34px; height: 34px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .logo-icon svg { width: 18px; height: 18px; }
+        .logo-text { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
+
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 10px;
+            padding: 7px 13px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted2);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .btn-back:hover { color: var(--text); }
+
+        /* ── WRAPPER ── */
+        .wrapper {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 26px 20px 0;
+        }
+
+        /* ── HERO ── */
+        .hero { margin-bottom: 26px; }
+
+        .hero-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 5px;
+        }
+
+        .hero-title {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.4px;
+            color: var(--text);
+        }
+
+        .hero-title span { color: var(--accent); }
+
+        /* ── FLASH ── */
+        .flash {
+            background: var(--green-dim);
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 14px;
+            padding: 13px 16px;
             font-size: 14px;
-            box-sizing: border-box;
-            transition: border-color 0.2s;
+            color: var(--green);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── SECTION TITLE ── */
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+        }
+
+        /* ── FORM CARD ── */
+        .form-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 28px;
+        }
+
+        .form-card-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: var(--surface2);
+        }
+
+        .form-body { padding: 18px; }
+
+        .field { margin-bottom: 14px; }
+        .field:last-child { margin-bottom: 0; }
+
+        .field-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted2);
+            margin-bottom: 7px;
+            display: block;
+            letter-spacing: 0.3px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            height: 50px;
+            background: var(--bg);
+            border: 1px solid var(--border2);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 15px;
+            padding: 0 14px;
+            font-family: inherit;
+            transition: border-color 0.15s, background 0.15s;
         }
 
         input:focus {
             outline: none;
-            border-color: var(--primary);
+            border-color: var(--accent);
+            background: rgba(124,110,247,0.04);
         }
 
-        button, .btn { 
-            width: 100%; height: 50px; border-radius: 12px; border: none; 
-            background: var(--primary); color: #052e16; 
-            font-size: 15px; font-weight: 700; cursor: pointer; 
-            transition: all 0.2s; display: flex; align-items: center; justify-content: center;
-            text-decoration: none; margin-top: 10px;
+        input::placeholder { color: var(--muted); }
+
+        .btn-submit {
+            width: 100%;
+            height: 52px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            letter-spacing: -0.2px;
+            transition: opacity 0.15s, transform 0.1s;
+            margin-top: 6px;
         }
 
-        button:hover { background: var(--primary-dark); transform: translateY(-2px); }
-        
-        .btn-back { 
-            background: transparent; color: var(--text-muted); 
-            border: 1px solid var(--border); font-size: 13px; height: 40px; margin-bottom: 20px;
+        .btn-submit:active { transform: scale(0.97); opacity: 0.9; }
+
+        /* ── LISTA DE PRODUTOS ── */
+        .products-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
         }
 
-        .section-label {
-            font-size: 11px; font-weight: 700; color: var(--text-muted);
-            text-transform: uppercase; letter-spacing: 1.5px;
-            margin: 25px 0 12px 0; display: block;
+        .products-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface2);
         }
 
-        /* Cartões de Produto */
-        .card { 
-            background: var(--card); padding: 20px; border-radius: 20px; 
-            margin-bottom: 15px; border: 1px solid var(--border);
+        .products-header-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .count-badge {
+            background: rgba(124,110,247,0.15);
+            border: 1px solid rgba(124,110,247,0.25);
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
         }
 
         .product-item {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border);
+            gap: 14px;
+            transition: background 0.15s;
         }
 
-        .product-info h4 { margin: 0; font-size: 16px; color: var(--text-main); }
-        .product-info small { color: var(--primary); font-weight: 700; font-size: 14px; }
-        .product-desc { font-size: 12px; color: var(--text-muted); margin-top: 4px; display: block; }
+        .product-item:last-child { border-bottom: none; }
+        .product-item:hover { background: var(--surface2); }
+
+        .product-avatar {
+            width: 42px; height: 42px;
+            border-radius: 12px;
+            background: rgba(124,110,247,0.1);
+            border: 1px solid rgba(124,110,247,0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .product-info { flex: 1; min-width: 0; }
+
+        .product-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .product-desc {
+            font-size: 12px;
+            color: var(--muted2);
+            margin-top: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .product-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .product-price {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--green);
+        }
 
         .btn-delete {
+            background: var(--danger-dim);
+            border: 1px solid rgba(239,68,68,0.15);
             color: var(--danger);
-            text-decoration: none;
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 700;
-            padding: 8px 12px;
+            padding: 4px 10px;
             border-radius: 8px;
-            background: rgba(239, 68, 68, 0.1);
-            transition: 0.2s;
+            text-decoration: none;
+            transition: background 0.15s;
         }
 
-        .btn-delete:hover { background: var(--danger); color: white; }
+        .btn-delete:hover {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+        }
 
-        /* Alertas de Mensagem (Flash) */
-        .alert {
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            font-weight: 600;
+        /* ── EMPTY STATE ── */
+        .empty-state {
             text-align: center;
-            background: rgba(34, 197, 94, 0.2);
-            color: var(--primary);
-            border: 1px solid var(--primary);
+            padding: 36px 20px;
+        }
+
+        .empty-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .empty-text {
+            font-size: 14px;
+            color: var(--muted);
         }
     </style>
 </head>
 <body>
 
-<div class="container">
+<!-- HEADER -->
+<div class="header">
+    <div class="header-left">
+        <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+        </div>
+        <span class="logo-text">SalesHub</span>
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="btn-back">← Painel</a>
+</div>
 
-    <a href="/dashboard" class="btn btn-back">← Voltar ao Painel</a>
+<div class="wrapper">
 
-    <div class="brand-header">
-        <h1>Gerenciar Cardápio</h1>
+    <!-- HERO -->
+    <div class="hero">
+        <p class="hero-label">Gestão de Estoque</p>
+        <h1 class="hero-title">Meu <span>Cardápio</span></h1>
     </div>
 
+    <!-- FLASH -->
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         {% for message in messages %}
-          <div class="alert">{{ message }}</div>
+          <div class="flash">✓ {{ message }}</div>
         {% endfor %}
       {% endif %}
     {% endwith %}
 
-    <span class="section-label">Novo Produto</span>
-    <div class="card">
-        <form method="POST">
-            <div class="form-group">
-                <input type="text" name="nome" placeholder="Nome do item (ex: Coxinha)" required>
-            </div>
-            <div class="form-group">
-                <input type="number" name="preco" step="0.01" placeholder="Preço (R$ 0,00)" required>
-            </div>
-            <div class="form-group">
-                <input type="text" name="descricao" placeholder="Pequena descrição ou ingredientes">
-            </div>
-            <button type="submit">✨ Adicionar ao Cardápio</button>
-        </form>
-    </div>
-
-    <span class="section-label">Meus Itens Cadastrados</span>
-
-    {% for p in produtos %}
-    <div class="card">
-        <div class="product-item">
-            <div class="product-info">
-                <h4>{{ p.nome }}</h4>
-                <small>R$ {{ "%.2f"|format(p.preco) }}</small>
-                {% if p.descricao %}
-                <span class="product-desc">{{ p.descricao }}</span>
-                {% endif %}
-            </div>
-            <a href="/deletar-produto/{{ p.id }}" 
-               onclick="return confirm('Deseja excluir este produto?')" 
-               class="btn-delete">Remover</a>
+    <!-- FORM NOVO PRODUTO -->
+    <p class="section-title">Adicionar Produto</p>
+    <div class="form-card">
+        <div class="form-card-header">Novo Item</div>
+        <div class="form-body">
+            <form method="POST">
+                <div class="field">
+                    <label class="field-label">Nome do Item</label>
+                    <input type="text" name="nome" placeholder="ex: Coxinha de Frango" required>
+                </div>
+                <div class="field">
+                    <label class="field-label">Preço (R$)</label>
+                    <input type="number" name="preco" step="0.01" min="0" placeholder="ex: 5.00" required>
+                </div>
+                <div class="field">
+                    <label class="field-label">Descrição <span style="color: var(--muted); font-weight: 400;">(opcional)</span></label>
+                    <input type="text" name="descricao" placeholder="ex: Recheio cremoso, massa crocante">
+                </div>
+                <button type="submit" class="btn-submit">＋ Adicionar ao Cardápio</button>
+            </form>
         </div>
     </div>
-    {% else %}
-    <div style="text-align: center; padding: 30px 0;">
-        <p style="color: var(--text-muted); font-size: 14px;">Você ainda não tem produtos cadastrados.</p>
-    </div>
-    {% endfor %}
 
+    <!-- LISTA DE PRODUTOS -->
+    <p class="section-title">Itens Cadastrados</p>
+    <div class="products-card">
+        <div class="products-header">
+            <span class="products-header-title">Cardápio Atual</span>
+            <span class="count-badge">{{ produtos|length }} ite{{ 'm' if produtos|length == 1 else 'ns' }}</span>
+        </div>
+
+        {% for p in produtos %}
+        <div class="product-item">
+            <div class="product-avatar">🍽</div>
+            <div class="product-info">
+                <p class="product-name">{{ p.nome }}</p>
+                {% if p.descricao %}
+                <p class="product-desc">{{ p.descricao }}</p>
+                {% else %}
+                <p class="product-desc" style="color: var(--muted); font-style: italic;">Sem descrição</p>
+                {% endif %}
+            </div>
+            <div class="product-right">
+                <span class="product-price">R$ {{ "%.2f"|format(p.preco) }}</span>
+                <a href="{{ url_for('deletar_produto', id=p.id) }}"
+                   onclick="return confirm('Remover {{ p.nome }} do cardápio?')"
+                   class="btn-delete">Remover</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🍽</div>
+            <p class="empty-text">Nenhum item cadastrado ainda.<br>Adicione seu primeiro produto acima.</p>
+        </div>
+        {% endfor %}
+
+    </div>
 </div>
 
 </body>
