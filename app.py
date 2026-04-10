@@ -61,6 +61,36 @@ class ItemPedido(db.Model):
 def load_user(user_id):
     return Usuario.query.get(int(user_id))
 
+# --- ROTAS DE ADMINISTRAÇÃO E CONTROLE ---
+
+@app.route('/admin')
+def admin_panel():
+    # Pegando dados para o relatório básico
+    total_usuarios = Usuario.query.count()
+    total_pedidos = Pedido.query.filter_by(status='Confirmado').count()
+    soma_vendas = db.session.query(func.sum(Pedido.valor_total)).filter(Pedido.status == 'Confirmado').scalar() or 0
+    
+    # Ranking para o gráfico do Admin (Top 5 barracas que mais venderam)
+    vendas_por_barraca = db.session.query(
+        Usuario.nome_barraca, 
+        func.sum(Pedido.valor_total).label('total')
+    ).join(Pedido, Usuario.id == Pedido.vendedor_id).filter(Pedido.status == 'Confirmado')\
+     .group_by(Usuario.id).order_by(func.sum(Pedido.valor_total).desc()).limit(5).all()
+
+    return render_template('admin.html', 
+                           total_usuarios=total_usuarios, 
+                           total_pedidos=total_pedidos, 
+                           soma_vendas=soma_vendas,
+                           vendas_por_barraca=vendas_por_barraca)
+
+@app.route('/admin/reset-database', methods=['POST'])
+def reset_database():
+    # Comando de destruição e reconstrução total
+    db.drop_all()
+    db.create_all()
+    flash("O Banco de Dados foi completamente resetado!")
+    return redirect(url_for('admin_panel'))
+
 # --- ROTAS DE NAVEGAÇÃO E COMPRA ---
 
 @app.route("/")
@@ -96,7 +126,7 @@ def ver_barraca(usuario_id):
         if total_pedido > 0:
             novo_pedido = Pedido(valor_total=total_pedido, cliente_id=current_user.id, vendedor_id=barraca.id)
             db.session.add(novo_pedido)
-            db.session.flush() # Gera o ID do pedido antes do commit final
+            db.session.flush() 
             
             for item in itens_selecionados:
                 ip = ItemPedido(pedido_id=novo_pedido.id, produto_nome=item['p'].nome, 
@@ -151,7 +181,6 @@ def dashboard():
     confirmados = Pedido.query.filter_by(vendedor_id=current_user.id, status='Confirmado').order_by(Pedido.data_hora.desc()).all()
     total_ganho = sum(p.valor_total for p in confirmados)
     
-    # RESOLUÇÃO DO ERRO 'media': Definindo a variável para o template
     media_valor = 0 
     
     return render_template("dashboard.html", 
