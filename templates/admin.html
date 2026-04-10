@@ -17,6 +17,7 @@
         .bg-gradient-success { background: linear-gradient(45deg, #1cc88a, #13855c); }
         .bg-gradient-danger { background: linear-gradient(45deg, #e74a3b, #be2617); }
         .nav-tabs .nav-link.active { font-weight: bold; color: #4e73df; }
+        .device-info { cursor: help; border-bottom: 1px dotted #ccc; }
     </style>
 </head>
 <body>
@@ -124,8 +125,17 @@
                                         <td class="fw-bold">{{ u.username }}</td>
                                         <td><span class="badge {% if u.tipo == 'vendedor' %}bg-primary{% else %}bg-secondary{% endif %}">{{ u.tipo|upper }}</span></td>
                                         <td>{{ u.nome_barraca or '-' }} ({{ u.turma or '-' }})</td>
-                                        <td class="text-muted"><small><i>Em breve</i></small></td>
-                                        <td class="text-muted"><small><i>Em breve</i></small></td>
+                                        
+                                        <td class="text-muted">
+                                            <small><i class="fa-solid fa-network-wired me-1"></i>{{ u.ip_registro or '0.0.0.0' }}</small>
+                                        </td>
+                                        
+                                        <td class="text-muted">
+                                            <small class="device-info" title="{{ u.dispositivo }}">
+                                                <i class="fa-solid fa-mobile-screen-button me-1"></i>
+                                                {{ (u.dispositivo or 'Desconhecido')[:35] }}...
+                                            </small>
+                                        </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -173,13 +183,11 @@
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 
     <script>
-        // Inicializa as tabelas de Raio-X com Pesquisa e Paginação
         $(document).ready(function() {
             $('#tabelaUsuarios').DataTable({ language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-PT.json' }});
             $('#tabelaPedidos').DataTable({ language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-PT.json' }});
         });
 
-        // Gráfico do Chart.js
         const ctx = document.getElementById('vendasChart').getContext('2d');
         const nomesBarracas = [{% for v in vendas_por_barraca %}"{{ v[0] }}",{% endfor %}];
         const valoresVendas = [{% for v in vendas_por_barraca %}{{ v[1] }},{% endfor %}];
