@@ -1,20 +1,189 @@
-<div class="card">
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Meus Produtos - SalesHub</title>
+    <style>
+        :root { 
+            --primary: #22c55e; 
+            --primary-dark: #16a34a;
+            --bg: #020617; 
+            --card: #1e293b; 
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --danger: #ef4444;
+        }
+
+        body { 
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 20px; 
+            display: flex;
+            justify-content: center;
+        }
+
+        .container { 
+            width: 100%; 
+            max-width: 450px; 
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .brand-header { text-align: center; margin-bottom: 25px; }
+        
+        h1 { 
+            font-size: 24px; font-weight: 800; margin: 0;
+            background: linear-gradient(to right, #ffffff, #94a3b8);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        /* Estilização dos Formulários e Inputs */
+        .form-group { margin-bottom: 15px; }
+        
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button, .btn { 
+            width: 100%; height: 50px; border-radius: 12px; border: none; 
+            background: var(--primary); color: #052e16; 
+            font-size: 15px; font-weight: 700; cursor: pointer; 
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+            text-decoration: none; margin-top: 10px;
+        }
+
+        button:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        
+        .btn-back { 
+            background: transparent; color: var(--text-muted); 
+            border: 1px solid var(--border); font-size: 13px; height: 40px; margin-bottom: 20px;
+        }
+
+        .section-label {
+            font-size: 11px; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin: 25px 0 12px 0; display: block;
+        }
+
+        /* Cartões de Produto */
+        .card { 
+            background: var(--card); padding: 20px; border-radius: 20px; 
+            margin-bottom: 15px; border: 1px solid var(--border);
+        }
+
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-info h4 { margin: 0; font-size: 16px; color: var(--text-main); }
+        .product-info small { color: var(--primary); font-weight: 700; font-size: 14px; }
+        .product-desc { font-size: 12px; color: var(--text-muted); margin-top: 4px; display: block; }
+
+        .btn-delete {
+            color: var(--danger);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(239, 68, 68, 0.1);
+            transition: 0.2s;
+        }
+
+        .btn-delete:hover { background: var(--danger); color: white; }
+
+        /* Alertas de Mensagem (Flash) */
+        .alert {
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <a href="/dashboard" class="btn btn-back">← Voltar ao Painel</a>
+
+    <div class="brand-header">
+        <h1>Gerenciar Cardápio</h1>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
     <span class="section-label">Novo Produto</span>
-    <form method="POST">
-        <input type="text" name="nome" placeholder="Nome do item (ex: Coxinha)" required>
-        <input type="number" name="preco" step="0.01" placeholder="Preço (R$)" required>
-        <input type="text" name="descricao" placeholder="Pequena descrição">
-        <button type="submit">Adicionar ao Cardápio</button>
-    </form>
+    <div class="card">
+        <form method="POST">
+            <div class="form-group">
+                <input type="text" name="nome" placeholder="Nome do item (ex: Coxinha)" required>
+            </div>
+            <div class="form-group">
+                <input type="number" name="preco" step="0.01" placeholder="Preço (R$ 0,00)" required>
+            </div>
+            <div class="form-group">
+                <input type="text" name="descricao" placeholder="Pequena descrição ou ingredientes">
+            </div>
+            <button type="submit">✨ Adicionar ao Cardápio</button>
+        </form>
+    </div>
+
+    <span class="section-label">Meus Itens Cadastrados</span>
+
+    {% for p in produtos %}
+    <div class="card">
+        <div class="product-item">
+            <div class="product-info">
+                <h4>{{ p.nome }}</h4>
+                <small>R$ {{ "%.2f"|format(p.preco) }}</small>
+                {% if p.descricao %}
+                <span class="product-desc">{{ p.descricao }}</span>
+                {% endif %}
+            </div>
+            <a href="/deletar-produto/{{ p.id }}" 
+               onclick="return confirm('Deseja excluir este produto?')" 
+               class="btn-delete">Remover</a>
+        </div>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 30px 0;">
+        <p style="color: var(--text-muted); font-size: 14px;">Você ainda não tem produtos cadastrados.</p>
+    </div>
+    {% endfor %}
+
 </div>
 
-<span class="section-label">Meus Itens</span>
-{% for p in produtos %}
-<div class="card" style="display: flex; justify-content: space-between; align-items: center;">
-    <div>
-        <h4 style="margin:0">{{ p.nome }}</h4>
-        <small style="color:var(--primary)">R$ {{ "%.2f"|format(p.preco) }}</small>
-    </div>
-    <a href="/deletar-produto/{{ p.id }}" style="color:#ef4444">Remover</a>
-</div>
-{% endfor %}
+</body>
+</html>
