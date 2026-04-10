@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - SalesHub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Dashboard Administrativo</h2>
+            <a href="/" class="btn btn-outline-secondary">Voltar ao Site</a>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card text-white bg-primary mb-3 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Total de Usuários</h5>
+                        <p class="card-text fs-2">**{{ total_usuarios }}**</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-success mb-3 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Vendas Totais</h5>
+                        <p class="card-text fs-2">R$ **{{ "%.2f"|format(soma_vendas) }}**</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-danger mb-3 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Zona de Perigo</h5>
+                        <form action="{{ url_for('reset_database') }}" method="POST" onsubmit="return confirm('ATENÇÃO: Isso apagará TODOS os dados. Deseja continuar?')">
+                            <button type="submit" class="btn btn-light fw-bold text-danger mt-2">RESETAR TUDO</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card p-4 shadow-sm">
+                    <h4 class="card-title mb-4">Desempenho por Barraca (Top 5)</h4>
+                    <div style="position: relative; height:40vh; width:100%">
+                        <canvas id="vendasChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('vendasChart').getContext('2d');
+        
+        // Dados vindos do Flask
+        const nomesBarracas = [{% for v in vendas_por_barraca %}"{{ v[0] }}",{% endfor %}];
+        const valoresVendas = [{% for v in vendas_por_barraca %}{{ v[1] }},{% endfor %}];
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: nomesBarracas,
+                datasets: [{
+                    label: 'Total em Vendas (R$)',
+                    data: valoresVendas,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
