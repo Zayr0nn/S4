@@ -31,6 +31,10 @@ class Usuario(UserMixin, db.Model):
     turma = db.Column(db.String(50), nullable=True)
     professor_responsavel = db.Column(db.String(50), nullable=True)
     
+    # NOVAS COLUNAS PARA O RAIO-X DO ADMIN
+    ip_registro = db.Column(db.String(50), nullable=True)
+    dispositivo = db.Column(db.String(255), nullable=True)
+    
     produtos = db.relationship('Produto', backref='dono', lazy=True)
     pedidos_recebidos = db.relationship('Pedido', backref='vendedor', foreign_keys='Pedido.vendedor_id', lazy=True)
 
@@ -77,11 +81,17 @@ def admin_panel():
     ).join(Pedido, Usuario.id == Pedido.vendedor_id).filter(Pedido.status == 'Confirmado')\
      .group_by(Usuario.id).order_by(func.sum(Pedido.valor_total).desc()).limit(5).all()
 
+    # Buscando todos os dados para as tabelas de Raio-X
+    todos_usuarios = Usuario.query.all()
+    todos_pedidos = Pedido.query.order_by(Pedido.data_hora.desc()).all()
+
     return render_template('admin.html', 
                            total_usuarios=total_usuarios, 
                            total_pedidos=total_pedidos, 
                            soma_vendas=soma_vendas,
-                           vendas_por_barraca=vendas_por_barraca)
+                           vendas_por_barraca=vendas_por_barraca,
+                           todos_usuarios=todos_usuarios,
+                           todos_pedidos=todos_pedidos)
 
 @app.route('/admin/reset-database', methods=['POST'])
 def reset_database():
@@ -212,6 +222,10 @@ def cadastro():
         senha_hash = generate_password_hash(request.form.get("senha"))
         tipo = request.form.get("tipo")
         
+        # CAPTURA DE IP E DISPOSITIVO
+        ip_cliente = request.remote_addr
+        user_agent = request.headers.get('User-Agent')
+        
         if tipo == "vendedor":
             prof = request.form.get("professor")
             if prof not in PROFESSORES_AUTORIZADOS:
@@ -220,9 +234,11 @@ def cadastro():
             
             novo = Usuario(username=username, senha=senha_hash, tipo="vendedor",
                            nome_barraca=request.form.get("nome"), pix=request.form.get("pix"),
-                           turma=request.form.get("turma"), professor_responsavel=prof)
+                           turma=request.form.get("turma"), professor_responsavel=prof,
+                           ip_registro=ip_cliente, dispositivo=user_agent) # Adicionado aqui
         else:
-            novo = Usuario(username=username, senha=senha_hash, tipo="cliente")
+            novo = Usuario(username=username, senha=senha_hash, tipo="cliente",
+                           ip_registro=ip_cliente, dispositivo=user_agent) # Adicionado aqui
 
         db.session.add(novo)
         db.session.commit()
