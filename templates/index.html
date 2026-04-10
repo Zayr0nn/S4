@@ -3,192 +3,436 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SalesHub - Início</title>
+    <title>SalesHub</title>
     <style>
-        :root { 
-            --primary: #22c55e; 
-            --primary-dark: #16a34a;
-            --gold: #fbbf24;
-            --bg: #020617; 
-            --card: #1e293b; 
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #13131a;
+            --surface2: #1c1c26;
+            --border: rgba(255,255,255,0.07);
+            --border2: rgba(255,255,255,0.12);
+            --accent: #7c6ef7;
+            --accent2: #5b4fd4;
+            --green: #22c55e;
+            --green-dim: rgba(34,197,94,0.12);
+            --gold: #f59e0b;
+            --gold-dim: rgba(245,158,11,0.12);
+            --text: #f1f0ff;
+            --muted: #6e6a8a;
+            --muted2: #9e9bb8;
+            --danger: #ef4444;
         }
 
-        body { 
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
-            background: var(--bg); 
-            color: var(--text-main); 
-            margin: 0; 
-            padding: 20px; 
-            display: flex;
-            justify-content: center;
-            -webkit-tap-highlight-color: transparent;
+        body {
+            font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 30px;
         }
 
-        .container { 
-            width: 100%; 
-            max-width: 450px; 
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .brand-header { text-align: center; margin-bottom: 25px; }
-
-        .logo-box {
-            background: linear-gradient(135deg, var(--primary), #10b981);
-            width: 50px; height: 50px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 10px;
-            box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.3);
-        }
-
-        h1 { 
-            font-size: 26px; font-weight: 800; margin: 0;
-            background: linear-gradient(to right, #ffffff, #94a3b8);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-
-        .user-status {
-            background: rgba(30, 41, 59, 0.5);
-            padding: 10px 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+        /* ── HEADER ── */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 20px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 34px; height: 34px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .logo-icon svg { width: 18px; height: 18px; }
+
+        .logo-text {
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: var(--text);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             font-size: 13px;
-            border: 1px dashed var(--border);
         }
 
-        .nav-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
-
-        button, .btn { 
-            width: 100%; height: 50px; border-radius: 12px; border: none; 
-            background: var(--primary); color: #052e16; 
-            font-size: 15px; font-weight: 700; cursor: pointer; 
-            transition: all 0.2s; display: flex; align-items: center; justify-content: center;
-            text-decoration: none;
-        }
-
-        button:hover { background: var(--primary-dark); transform: translateY(-2px); }
-        button:active { transform: scale(0.98); }
-
-        .btn-secondary { background: var(--card); color: var(--text-main); border: 1px solid var(--border); }
-
-        .section-label {
-            font-size: 11px; font-weight: 700; color: var(--text-muted);
-            text-transform: uppercase; letter-spacing: 1.5px;
-            margin-bottom: 12px; display: block;
-        }
-
-        .ranking-card { 
-            background: linear-gradient(145deg, #1e293b, #0f172a); 
-            padding: 15px 20px;
+        .user-pill {
+            background: var(--surface2);
+            border: 1px solid var(--border2);
             border-radius: 20px;
-            border: 1px solid var(--gold);
-            margin-bottom: 30px;
+            padding: 6px 12px;
+            font-size: 13px;
+            color: var(--muted2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .ranking-item { 
-            display: flex; 
-            align-items: center; 
-            padding: 10px 0; 
-            border-bottom: 1px solid rgba(255,255,255,0.05); 
+        .dot-online {
+            width: 7px; height: 7px;
+            background: var(--green);
+            border-radius: 50%;
+        }
+
+        .link-danger { color: var(--danger); text-decoration: none; font-size: 13px; font-weight: 600; }
+        .link-accent { color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 600; }
+
+        /* ── HERO ── */
+        .hero {
+            padding: 28px 20px 0;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .hero-greeting {
+            font-size: 13px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .hero-title {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--text);
+            line-height: 1.2;
+        }
+
+        .hero-title span { color: var(--accent); }
+
+        /* ── QUICK ACTIONS ── */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 20px 20px 0;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.15s;
+        }
+
+        .action-btn:active { transform: scale(0.97); opacity: 0.85; }
+
+        .action-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .action-secondary {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border2);
+        }
+
+        .action-full { grid-column: span 2; }
+
+        /* ── SECTION ── */
+        .section {
+            padding: 24px 20px 0;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        /* ── RANKING ── */
+        .ranking-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .ranking-header {
+            padding: 16px 18px 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .trophy-badge {
+            background: var(--gold-dim);
+            border: 1px solid rgba(245,158,11,0.2);
+            border-radius: 8px;
+            padding: 5px 8px;
+            font-size: 14px;
+        }
+
+        .ranking-header-text {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
         }
 
         .ranking-item:last-child { border-bottom: none; }
+        .ranking-item:hover { background: var(--surface2); }
 
-        .rank-pos { font-weight: 900; color: var(--gold); width: 35px; font-size: 18px; }
-        .rank-info { flex: 1; }
-        .rank-name { display: block; font-weight: 600; font-size: 14px; }
-        .rank-turma { font-size: 11px; color: var(--text-muted); }
-        .rank-value { font-weight: 700; color: var(--primary); font-size: 14px; }
-
-        .card { 
-            background: var(--card); padding: 20px; border-radius: 20px; 
-            margin-bottom: 15px; border: 1px solid var(--border);
+        .rank-medal {
+            font-size: 18px;
+            width: 32px;
+            text-align: center;
+            flex-shrink: 0;
         }
 
-        .card h3 { margin: 0; font-size: 18px; color: var(--text-main); }
-        .card .badge { 
-            display: inline-block; background: var(--bg); color: var(--primary);
-            font-size: 11px; padding: 4px 8px; border-radius: 6px; margin-top: 8px;
-            font-weight: bold; border: 1px solid var(--primary);
+        .rank-avatar {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700;
+            color: var(--accent);
+            margin-right: 12px;
+            flex-shrink: 0;
         }
-        .card p { margin: 12px 0 18px 0; color: var(--text-muted); font-size: 14px; line-height: 1.4; }
 
-        .logout-link { color: #ef4444; font-weight: bold; text-decoration: none; }
+        .rank-info { flex: 1; min-width: 0; }
+        .rank-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rank-turma { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+        .rank-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--green);
+            flex-shrink: 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        /* ── BARRACAS ── */
+        .barraca-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 12px;
+            transition: border-color 0.15s;
+        }
+
+        .barraca-card:hover { border-color: var(--border2); }
+
+        .barraca-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .barraca-avatar {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 800; color: #fff;
+            flex-shrink: 0;
+            margin-right: 12px;
+        }
+
+        .barraca-info { flex: 1; }
+        .barraca-nome { font-size: 16px; font-weight: 700; color: var(--text); }
+        .barraca-sub { font-size: 12px; color: var(--muted2); margin-top: 3px; }
+
+        .tag {
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .barraca-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            padding: 13px;
+            background: var(--green-dim);
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 12px;
+            color: var(--green);
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+
+        .barraca-btn:hover { background: rgba(34,197,94,0.2); }
     </style>
 </head>
 <body>
 
-<div class="container">
-
-    <div class="brand-header">
-        <div class="logo-box">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+<!-- HEADER -->
+<div class="header">
+    <div class="logo">
+        <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
         </div>
-        <h1>SalesHub</h1>
+        <span class="logo-text">SalesHub</span>
     </div>
-
-    <div class="user-status">
+    <div class="header-right">
         {% if current_user.is_authenticated %}
-            <span>🟢 <b>{{ current_user.username }}</b></span>
-            <a href="/logout" class="logout-link">Sair</a>
+            <div class="user-pill">
+                <div class="dot-online"></div>
+                {{ current_user.username }}
+            </div>
+            <a href="{{ url_for('logout') }}" class="link-danger">Sair</a>
         {% else %}
-            <span>⚪ Visitante</span>
-            <a href="/login" style="color: var(--primary); text-decoration: none; font-weight: bold;">Entrar</a>
+            <a href="{{ url_for('login') }}" class="link-accent">Entrar →</a>
         {% endif %}
     </div>
+</div>
 
-    <div class="nav-buttons">
-        {% if not current_user.is_authenticated %}
-            <a href="/cadastro" style="grid-column: span 2;"><button>Criar Minha Conta</button></a>
-        {% elif current_user.tipo == 'vendedor' %}
-            <a href="/meus-produtos"><button class="btn-secondary">📦 Produtos</button></a>
-            <a href="/dashboard"><button>📊 Painel</button></a>
-        {% endif %}
+<!-- HERO -->
+<div class="hero">
+    <p class="hero-greeting">Feira de Empreendedorismo</p>
+    <h1 class="hero-title">Bem-vindo à<br><span>Feira 2026</span></h1>
+</div>
+
+<!-- AÇÕES RÁPIDAS -->
+{% if not current_user.is_authenticated %}
+<div class="actions-grid">
+    <a href="{{ url_for('cadastro') }}" class="action-btn action-primary action-full">
+        ＋ Criar Minha Conta
+    </a>
+</div>
+{% elif current_user.tipo == 'vendedor' %}
+<div class="actions-grid">
+    <a href="{{ url_for('meus_produtos') }}" class="action-btn action-secondary">
+        ◈ Produtos
+    </a>
+    <a href="{{ url_for('dashboard') }}" class="action-btn action-primary">
+        ▤ Painel
+    </a>
+</div>
+{% endif %}
+
+<!-- RANKING -->
+<div class="section">
+    <div class="section-header">
+        <span class="section-title">Top 5 Faturamento</span>
     </div>
-
-    <span class="section-label">🏆 Top 5 Faturamento</span>
     <div class="ranking-card">
+        <div class="ranking-header">
+            <div class="trophy-badge">🏆</div>
+            <span class="ranking-header-text">Placar em Tempo Real</span>
+        </div>
         {% for item in ranking %}
         <div class="ranking-item">
-            <div class="rank-pos">{{ loop.index }}º</div>
+            <div class="rank-medal">
+                {% if loop.index == 1 %}🥇
+                {% elif loop.index == 2 %}🥈
+                {% elif loop.index == 3 %}🥉
+                {% else %}{{ loop.index }}º{% endif %}
+            </div>
+            <div class="rank-avatar">{{ item.nome_barraca[0] }}</div>
             <div class="rank-info">
-                <span class="rank-name">{{ item.nome_barraca }}</span>
-                <span class="rank-turma">{{ item.turma }}</span>
+                <div class="rank-name">{{ item.nome_barraca }}</div>
+                <div class="rank-turma">{{ item.turma }}</div>
             </div>
             <div class="rank-value">R$ {{ "%.2f"|format(item.total) }}</div>
         </div>
         {% else %}
-        <p style="text-align: center; color: var(--text-muted); font-size: 13px; margin: 10px 0;">
-            Aguardando vendas confirmadas...
-        </p>
+        <div class="empty-state">Aguardando primeiras vendas...</div>
         {% endfor %}
     </div>
+</div>
 
-    <span class="section-label">🏪 Unidades da Feira</span>
+<!-- BARRACAS -->
+<div class="section">
+    <div class="section-header">
+        <span class="section-title">Unidades da Feira</span>
+    </div>
 
     {% for barraca in barracas %}
-    <div class="card">
-        <h3>{{ barraca.nome_barraca }}</h3>
-        <div class="badge">{{ barraca.turma }}</div>
-        <p>Responsável: <b>Prof. {{ barraca.professor_responsavel }}</b></p>
-        
-        <a href="/barraca/{{ barraca.id }}">
-            <button>Ver Cardápio & Pagar</button>
+    <div class="barraca-card">
+        <div class="barraca-top">
+            <div class="barraca-avatar">{{ barraca.nome_barraca[0] }}</div>
+            <div class="barraca-info">
+                <div class="barraca-nome">{{ barraca.nome_barraca }}</div>
+                <div class="barraca-sub">Prof. {{ barraca.professor_responsavel }}</div>
+            </div>
+            <div class="tag">{{ barraca.turma }}</div>
+        </div>
+        <a href="{{ url_for('ver_barraca', usuario_id=barraca.id) }}" class="barraca-btn">
+            Ver Cardápio & Pagar
         </a>
     </div>
     {% else %}
-    <div style="text-align: center; padding: 40px 0;">
-        <p style="color: var(--text-muted);">Nenhuma unidade ativa no momento.</p>
+    <div class="empty-state" style="background: var(--surface); border-radius: 18px; border: 1px solid var(--border);">
+        Nenhuma unidade ativa no momento.
     </div>
     {% endfor %}
-
 </div>
 
 </body>
