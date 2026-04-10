@@ -2,36 +2,409 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pagamento PIX - SalesHub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pagamento PIX — SalesHub</title>
     <style>
-        :root { --primary: #22c55e; --bg: #020617; --card: #1e293b; --text: #f8fafc; --border: #334155; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 400px; text-align: center; }
-        .card { background: var(--card); padding: 30px; border-radius: 25px; border: 1px solid var(--border); }
-        .total-box { font-size: 2rem; font-weight: 900; color: var(--primary); margin: 20px 0; }
-        .pix-key { background: var(--bg); padding: 15px; border-radius: 12px; border: 1px dashed var(--primary); color: #fff; word-break: break-all; font-family: monospace; margin: 15px 0; }
-        .status-badge { background: #f59e0b; color: #000; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .btn-home { display: block; width: 100%; padding: 15px; background: var(--border); color: white; text-decoration: none; border-radius: 12px; margin-top: 20px; font-weight: bold; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #13131a;
+            --surface2: #1c1c26;
+            --border: rgba(255,255,255,0.07);
+            --border2: rgba(255,255,255,0.12);
+            --accent: #7c6ef7;
+            --green: #22c55e;
+            --green-dim: rgba(34,197,94,0.12);
+            --gold: #f59e0b;
+            --gold-dim: rgba(245,158,11,0.10);
+            --text: #f1f0ff;
+            --muted: #6e6a8a;
+            --muted2: #9e9bb8;
+        }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 12px; }
+
+        .logo-icon {
+            width: 34px; height: 34px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .logo-icon svg { width: 18px; height: 18px; }
+        .logo-text { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
+
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 10px;
+            padding: 7px 13px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted2);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .btn-back:hover { color: var(--text); }
+
+        /* ── WRAPPER ── */
+        .wrapper {
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 28px 20px 0;
+        }
+
+        /* ── STATUS PILL ── */
+        .status-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: var(--gold-dim);
+            border: 1px solid rgba(245,158,11,0.25);
+            border-radius: 20px;
+            padding: 7px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .pulse {
+            width: 8px; height: 8px;
+            background: var(--gold);
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+
+        /* ── VALOR CARD ── */
+        .valor-card {
+            background: var(--accent);
+            border-radius: 22px;
+            padding: 26px 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .valor-card::before {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 130px; height: 130px;
+            background: rgba(255,255,255,0.07);
+            border-radius: 50%;
+        }
+
+        .valor-card::after {
+            content: '';
+            position: absolute;
+            bottom: -50px; left: 20px;
+            width: 100px; height: 100px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 50%;
+        }
+
+        .valor-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 8px;
+        }
+
+        .valor-total {
+            font-size: 42px;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: -1px;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .valor-pedido {
+            font-size: 13px;
+            color: rgba(255,255,255,0.55);
+        }
+
+        /* ── INFO CARD ── */
+        .info-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .info-header {
+            padding: 13px 18px;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: var(--surface2);
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            gap: 12px;
+        }
+
+        .info-row:last-child { border-bottom: none; }
+
+        .info-row-label {
+            font-size: 13px;
+            color: var(--muted2);
+            flex-shrink: 0;
+        }
+
+        .info-row-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            text-align: right;
+        }
+
+        /* ── CHAVE PIX ── */
+        .pix-card {
+            background: var(--surface);
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .pix-header {
+            padding: 13px 18px;
+            border-bottom: 1px solid rgba(34,197,94,0.15);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--green);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: var(--green-dim);
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .pix-body {
+            padding: 18px;
+        }
+
+        .pix-key-box {
+            background: var(--bg);
+            border: 1px dashed rgba(34,197,94,0.3);
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 15px;
+            color: var(--green);
+            word-break: break-all;
+            letter-spacing: 0.3px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .btn-copy {
+            width: 100%;
+            height: 48px;
+            background: var(--green-dim);
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 12px;
+            color: var(--green);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-family: inherit;
+        }
+
+        .btn-copy:hover { background: rgba(34,197,94,0.2); }
+        .btn-copy:active { transform: scale(0.97); }
+
+        /* ── INSTRUÇÃO ── */
+        .instruction-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .instruction-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .instruction-text {
+            font-size: 13px;
+            color: var(--muted2);
+            line-height: 1.6;
+        }
+
+        .instruction-text strong { color: var(--text); font-weight: 700; }
+
+        /* ── BOTÃO VOLTAR ── */
+        .btn-home {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 54px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 14px;
+            color: var(--text);
+            font-size: 15px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+
+        .btn-home:hover { background: var(--border2); }
+        .btn-home:active { transform: scale(0.97); }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <span class="status-badge">AGUARDANDO PAGAMENTO</span>
-            <h2>Total do Pedido</h2>
-            <div class="total-box">R$ {{ "%.2f"|format(pedido.valor_total) }}</div>
-            
-            <p style="color: #94a3b8;">Pague via PIX para a barraca:</p>
-            <h4 style="margin-bottom: 5px;">{{ barraca.nome_barraca }}</h4>
-            <div class="pix-key" id="pixKey">{{ barraca.pix }}</div>
-            
-            <p style="font-size: 13px; color: #94a3b8; margin-top: 20px;">
-                Após pagar, avise o vendedor na barraca. Ele confirmará seu pedido no painel dele.
-            </p>
 
-            <a href="/" class="btn-home">Voltar ao Início</a>
+<!-- HEADER -->
+<div class="header">
+    <div class="header-left">
+        <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+        </div>
+        <span class="logo-text">SalesHub</span>
+    </div>
+    <a href="{{ url_for('index') }}" class="btn-back">← Início</a>
+</div>
+
+<div class="wrapper">
+
+    <!-- STATUS -->
+    <div class="status-row">
+        <div class="status-pill">
+            <div class="pulse"></div>
+            Aguardando Pagamento
         </div>
     </div>
+
+    <!-- VALOR -->
+    <div class="valor-card">
+        <p class="valor-label">Total a Pagar</p>
+        <p class="valor-total">R$ {{ "%.2f"|format(pedido.valor_total) }}</p>
+        <p class="valor-pedido">Pedido #{{ pedido.id }}</p>
+    </div>
+
+    <!-- INFO BARRACA -->
+    <div class="info-card">
+        <div class="info-header">Destino do Pagamento</div>
+        <div class="info-row">
+            <span class="info-row-label">Barraca</span>
+            <span class="info-row-value">{{ barraca.nome_barraca }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-row-label">Turma</span>
+            <span class="info-row-value">{{ barraca.turma }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-row-label">Responsável</span>
+            <span class="info-row-value">Prof. {{ barraca.professor_responsavel }}</span>
+        </div>
+    </div>
+
+    <!-- CHAVE PIX -->
+    <div class="pix-card">
+        <div class="pix-header">
+            ◈ Chave PIX
+        </div>
+        <div class="pix-body">
+            <div class="pix-key-box" id="pixKey">{{ barraca.pix }}</div>
+            <button class="btn-copy" onclick="copiarPix()">
+                <span id="copyLabel">Copiar Chave PIX</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- INSTRUÇÃO -->
+    <div class="instruction-card">
+        <div class="instruction-icon">ℹ</div>
+        <p class="instruction-text">
+            Após realizar o pagamento, <strong>avise o vendedor na barraca.</strong>
+            Ele confirmará seu pedido pelo painel e seu atendimento será liberado.
+        </p>
+    </div>
+
+    <!-- VOLTAR -->
+    <a href="{{ url_for('index') }}" class="btn-home">← Voltar ao Início</a>
+
+</div>
+
+<script>
+    function copiarPix() {
+        const chave = document.getElementById('pixKey').innerText;
+        const label = document.getElementById('copyLabel');
+        navigator.clipboard.writeText(chave).then(() => {
+            label.textContent = '✓ Chave Copiada!';
+            setTimeout(() => { label.textContent = 'Copiar Chave PIX'; }, 2500);
+        }).catch(() => {
+            label.textContent = 'Erro ao copiar';
+            setTimeout(() => { label.textContent = 'Copiar Chave PIX'; }, 2000);
+        });
+    }
+</script>
+
 </body>
 </html>
