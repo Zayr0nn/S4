@@ -3,155 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Login - SalesHub</title>
+    <title>Login — SalesHub</title>
     <style>
-        :root { 
-            --primary: #22c55e; 
-            --primary-dark: #16a34a;
-            --bg: #020617; 
-            --card: #1e293b; 
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #13131a;
+            --surface2: #1c1c26;
+            --border: rgba(255,255,255,0.07);
+            --border2: rgba(255,255,255,0.12);
+            --accent: #7c6ef7;
+            --text: #f1f0ff;
+            --muted: #6e6a8a;
+            --muted2: #9e9bb8;
+            --danger: #ef4444;
+            --danger-dim: rgba(239,68,68,0.1);
         }
 
-        body { 
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
-            background: var(--bg); 
-            color: var(--text-main); 
-            margin: 0; 
-            padding: 20px; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        body {
+            font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            -webkit-tap-highlight-color: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 20px;
         }
 
-        .container { 
-            width: 100%; 
-            max-width: 400px; 
-            animation: fadeIn 0.5s ease;
+        .card-wrap {
+            width: 100%;
+            max-width: 400px;
+            animation: rise 0.4s ease;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
 
-        .brand-header { text-align: center; margin-bottom: 25px; }
+        /* ── LOGO ── */
+        .brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 32px;
+        }
 
-        .logo-box {
-            background: linear-gradient(135deg, var(--primary), #10b981);
-            width: 50px; height: 50px; border-radius: 12px;
+        .logo-icon {
+            width: 52px; height: 52px;
+            background: var(--accent);
+            border-radius: 16px;
             display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 10px;
-            box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.3);
+            margin-bottom: 14px;
         }
 
-        h1 { 
-            font-size: 26px; font-weight: 800; margin: 0;
-            background: linear-gradient(to right, #ffffff, #94a3b8);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        .logo-icon svg { width: 26px; height: 26px; }
+
+        .brand-name {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--text);
+            margin-bottom: 5px;
         }
 
-        .card { 
-            background: var(--card); padding: 25px; border-radius: 20px; 
+        .brand-sub {
+            font-size: 14px;
+            color: var(--muted2);
+        }
+
+        /* ── FLASH ── */
+        .flash {
+            background: var(--danger-dim);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 14px;
+            padding: 13px 16px;
+            font-size: 14px;
+            color: var(--danger);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── FORM CARD ── */
+        .form-card {
+            background: var(--surface);
             border: 1px solid var(--border);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-radius: 22px;
+            overflow: hidden;
         }
 
-        .section-label {
-            font-size: 11px; font-weight: 700; color: var(--text-muted);
-            text-transform: uppercase; letter-spacing: 1.5px;
-            margin-top: 15px; margin-bottom: 8px; display: block;
+        .form-section-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: var(--surface2);
         }
 
-        input { 
-            width: 100%; height: 52px; border-radius: 12px; border: 1px solid var(--border); 
-            background: var(--bg); color: white; font-size: 16px; 
-            margin-bottom: 15px; box-sizing: border-box; padding: 0 15px;
+        .form-body { padding: 20px 18px; }
+
+        .field { margin-bottom: 16px; }
+        .field:last-child { margin-bottom: 0; }
+
+        .field-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted2);
+            margin-bottom: 7px;
+            display: block;
+            letter-spacing: 0.3px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            height: 50px;
+            background: var(--bg);
+            border: 1px solid var(--border2);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 15px;
+            padding: 0 14px;
             font-family: inherit;
+            transition: border-color 0.15s, background 0.15s;
         }
 
-        input:focus { outline: 2px solid var(--primary); border-color: transparent; }
-
-        .password-container { position: relative; }
-        .toggle-password { 
-            position: absolute; right: 15px; top: 14px; 
-            cursor: pointer; font-size: 20px; user-select: none; color: var(--text-muted);
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(124,110,247,0.04);
         }
 
-        button { 
-            width: 100%; height: 55px; background: var(--primary); color: #052e16; 
-            border: none; border-radius: 12px; font-weight: 800; font-size: 16px; 
-            margin-top: 10px; cursor: pointer; transition: 0.2s; 
+        input::placeholder { color: var(--muted); }
+
+        /* ── SENHA COM OLHINHO ── */
+        .password-wrap { position: relative; }
+        .password-wrap input { padding-right: 48px; }
+
+        .eye-btn {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--muted2);
+            padding: 0;
+            line-height: 1;
         }
 
-        button:hover { background: var(--primary-dark); }
-        button:active { transform: scale(0.97); }
-
-        .flash { 
-            color: #fca5a5; background: rgba(239, 68, 68, 0.1); 
-            padding: 12px; border-radius: 12px; text-align: center; 
-            margin-bottom: 20px; font-size: 14px; border: 1px solid rgba(239, 68, 68, 0.2);
+        /* ── BOTÃO ── */
+        .btn-submit {
+            width: 100%;
+            height: 54px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            letter-spacing: -0.2px;
+            transition: opacity 0.15s, transform 0.1s;
+            margin-top: 20px;
         }
 
+        .btn-submit:active { transform: scale(0.97); opacity: 0.9; }
+
+        /* ── FOOTER ── */
         .footer-link {
-            display: block; text-align: center; margin-top: 20px;
-            color: var(--text-muted); font-size: 14px; text-decoration: none;
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--muted2);
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .footer-link span {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        /* ── DIVIDER ── */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0 0;
+        }
+
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .divider-text {
+            font-size: 12px;
+            color: var(--muted);
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="brand-header">
-        <div class="logo-box">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                <polyline points="10 17 15 12 10 7"></polyline>
-                <line x1="15" y1="12" x2="3" y2="12"></line>
+<div class="card-wrap">
+
+    <!-- LOGO -->
+    <div class="brand">
+        <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
             </svg>
         </div>
-        <h1>SalesHub</h1>
-        <p style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">Acesse sua conta para continuar</p>
+        <h1 class="brand-name">SalesHub</h1>
+        <p class="brand-sub">Acesse sua conta para continuar</p>
     </div>
 
+    <!-- FLASH -->
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         {% for message in messages %}
-          <div class="flash">⚠️ {{ message }}</div>
+          <div class="flash">⚠ {{ message }}</div>
         {% endfor %}
       {% endif %}
     {% endwith %}
 
-    <div class="card">
-        <form method="POST">
-            <span class="section-label">Acesso</span>
-            <input type="text" name="username" placeholder="Nome de usuário" required>
+    <!-- FORM -->
+    <div class="form-card">
+        <div class="form-section-header">Identificação</div>
+        <div class="form-body">
+            <form method="POST">
+                <div class="field">
+                    <label class="field-label">Nome de Usuário</label>
+                    <input type="text" name="username" placeholder="ex: arthur_2026" required>
+                </div>
+                <div class="field">
+                    <label class="field-label">Senha</label>
+                    <div class="password-wrap">
+                        <input type="password" name="senha" id="senha" placeholder="Sua senha secreta" required>
+                        <button type="button" class="eye-btn" onclick="toggleSenha()" id="eyeIcon">👁️</button>
+                    </div>
+                </div>
 
-            <span class="section-label">Senha</span>
-            <div class="password-container">
-                <input type="password" name="senha" id="senha" placeholder="Sua senha secreta" required>
-                <span class="toggle-password" onclick="togglePasswordVisibility()" id="toggleIcon">👁️</span>
+                <button type="submit" class="btn-submit">Entrar →</button>
+            </form>
+
+            <div class="divider">
+                <div class="divider-line"></div>
+                <span class="divider-text">novo por aqui?</span>
+                <div class="divider-line"></div>
             </div>
-
-            <button type="submit">Entrar no Painel</button>
-        </form>
-        
-        <a href="/cadastro" class="footer-link">Não tem uma conta? <span style="color: var(--primary); font-weight: bold;">Cadastrar-se</span></a>
+        </div>
     </div>
+
+    <a href="{{ url_for('cadastro') }}" class="footer-link">
+        Não tem conta? <span>Cadastrar-se agora</span>
+    </a>
+
 </div>
 
 <script>
-    function togglePasswordVisibility() {
-        const passwordInput = document.getElementById('senha');
-        const icon = document.getElementById('toggleIcon');
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            icon.textContent = '🙈';
-        } else {
-            passwordInput.type = 'password';
-            icon.textContent = '👁️';
-        }
+    function toggleSenha() {
+        const input = document.getElementById('senha');
+        const icon = document.getElementById('eyeIcon');
+        const hidden = input.type === 'password';
+        input.type = hidden ? 'text' : 'password';
+        icon.textContent = hidden ? '🙈' : '👁️';
     }
 </script>
 
