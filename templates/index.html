@@ -325,6 +325,56 @@
         }
 
         .barraca-btn:hover { background: rgba(34,197,94,0.2); }
+
+        /* ── MEMBROS NO CARD ── */
+        .membros-section {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .membros-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .membros-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .membro-tag {
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--muted2);
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .membro-tag:hover {
+            background: var(--border2);
+            color: var(--text);
+        }
+
+        .coroa {
+            color: var(--gold);
+            font-size: 14px;
+            margin-left: 2px;
+        }
     </style>
 </head>
 <body>
@@ -366,7 +416,7 @@
         ＋ Criar Minha Conta
     </a>
 </div>
-{% elif current_user.tipo == 'vendedor' %}
+{% elif current_user.tipo == 'vendedor' or is_membro_ativo %}
 <div class="actions-grid">
     <a href="{{ url_for('meus_produtos') }}" class="action-btn action-secondary">
         ◈ Produtos
@@ -424,6 +474,28 @@
             </div>
             <div class="tag">{{ barraca.turma }}</div>
         </div>
+
+        <!-- EXIBIÇÃO DE MEMBROS (LÍDER + MEMBROS APROVADOS) -->
+        {% set info = membros_por_barraca.get(barraca.id) %}
+        {% if info %}
+        <div class="membros-section">
+            <div class="membros-title">
+                <span>👥</span> Equipe ({{ info.membros|length + 1 }})
+            </div>
+            <div class="membros-list">
+                <!-- Líder com coroa -->
+                <span class="membro-tag">
+                    {{ info.lider.username }}
+                    <span class="coroa" title="Líder da barraca">👑</span>
+                </span>
+                <!-- Membros aprovados -->
+                {% for membro in info.membros %}
+                <span class="membro-tag">{{ membro.username }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         <a href="{{ url_for('ver_barraca', usuario_id=barraca.id) }}" class="barraca-btn">
             Ver Cardápio & Pagar
         </a>
