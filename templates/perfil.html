@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Perfil de {{ usuario.username }} — SalesHub</title>
     <style>
-        /* Mantenha o mesmo CSS que você já tem, sem alterações */
+        /* Mantenha exatamente o mesmo CSS que você já tem, sem alterações */
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
@@ -359,12 +359,11 @@
     <div class="avatar-section">
         <div class="avatar-wrap" {% if is_self %}onclick="document.getElementById('fotoInput').click()"{% endif %}>
             {% if usuario.foto_perfil %}
-                <img src="{{ usuario.foto_perfil }}" class="avatar-img" id="avatarPreviewBig" alt="foto">
+                <!-- Usa a imagem salva na pasta uploads -->
+                <img src="{{ url_for('static', filename='uploads/' + usuario.foto_perfil) }}" class="avatar-img" id="avatarPreviewBig" alt="foto">
             {% else %}
-                <div class="avatar-placeholder" id="avatarPlaceholder">
-                    {{ usuario.username[0].upper() }}
-                </div>
-                <img src="" class="avatar-img" id="avatarPreviewBig" style="display:none;" alt="foto">
+                <!-- Fallback para ui-avatars -->
+                <img src="https://ui-avatars.com/api/?name={{ usuario.username }}&background=7c6ef7&color=fff&size=96" class="avatar-img" id="avatarPreviewBig" alt="avatar">
             {% endif %}
             {% if is_self %}
             <div class="avatar-edit-btn">✎</div>
@@ -428,15 +427,15 @@
     <!-- SE FOR O PRÓPRIO USUÁRIO, MOSTRAR FORMULÁRIO DE EDIÇÃO -->
     {% if is_self %}
     <p class="section-title">Editar Perfil</p>
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" action="{{ url_for('perfil', usuario_id=usuario.id) }}" enctype="multipart/form-data">
 
-        <!-- FOTO -->
+        <!-- FOTO DE PERFIL (agora com name="foto_perfil") -->
         <div class="form-card">
             <div class="form-section-header">Foto de Perfil</div>
             <div class="form-body">
                 <div class="field">
                     <label class="field-label">Escolher imagem</label>
-                    <input type="file" name="foto" id="fotoInput" accept="image/*" onchange="previewFoto(event)">
+                    <input type="file" name="foto_perfil" id="fotoInput" accept="image/*" onchange="previewFoto(event)">
                 </div>
                 <div class="foto-preview-wrap" id="fotoPreviewWrap">
                     <img src="" id="fotoPreviewSmall" class="foto-preview" alt="preview">
@@ -505,12 +504,9 @@
             const src = e.target.result;
 
             const bigImg = document.getElementById('avatarPreviewBig');
-            const placeholder = document.getElementById('avatarPlaceholder');
             if (bigImg) {
                 bigImg.src = src;
-                bigImg.style.display = 'block';
             }
-            if (placeholder) placeholder.style.display = 'none';
 
             const smallImg = document.getElementById('fotoPreviewSmall');
             const wrap = document.getElementById('fotoPreviewWrap');
