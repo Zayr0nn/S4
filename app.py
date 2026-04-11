@@ -1,6 +1,7 @@
 import os
 import sys
 import traceback
+import logging
 
 # --- Cloudinary (opcional) ---
 try:
@@ -10,7 +11,7 @@ try:
     CLOUDINARY_AVAILABLE = True
 except ImportError:
     CLOUDINARY_AVAILABLE = False
-    print("Aviso: Cloudinary não está instalado. Upload de fotos desabilitado.", file=sys.stderr)
+    logging.warning("Cloudinary não está instalado. Upload de fotos desabilitado.")
 
 from flask import Flask, render_template, request, redirect, url_for, flash, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -27,14 +28,22 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'saleshub_2026_secure_ke
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(base_dir, 'feira.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Configuração do Cloudinary (se disponível)
+# Configura logging básico
+logging.basicConfig(level=logging.INFO, stream=sys.stderr)
+
+# Configuração do Cloudinary (segura)
 if CLOUDINARY_AVAILABLE:
-    cloudinary.config(
-        cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
-        api_key=os.environ.get('CLOUDINARY_API_KEY'),
-        api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
-        secure=True
-    )
+    try:
+        cloudinary.config(
+            cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+            api_key=os.environ.get('CLOUDINARY_API_KEY'),
+            api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
+            secure=True
+        )
+        app.logger.info("Cloudinary configurado com sucesso.")
+    except Exception as e:
+        app.logger.error(f"Erro ao configurar Cloudinary: {e}. Upload de fotos desabilitado.")
+        CLOUDINARY_AVAILABLE = False
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -621,6 +630,7 @@ def perfil(usuario_id):
 # --- ROTA DE SAÚDE PARA O RAILWAY ---
 @app.route('/health')
 def health():
+    app.logger.info("Health check acessado com sucesso.")
     return 'OK', 200
 
 # --- INICIALIZAÇÃO SEGURA DO BANCO DE DADOS ---
@@ -629,9 +639,9 @@ def init_db():
         inspector = inspect(db.engine)
         if not inspector.has_table("usuario"):
             db.create_all()
-            print("✅ Tabelas criadas com sucesso.", file=sys.stderr)
+            app.logger.info("✅ Tabelas criadas com sucesso.")
         else:
-            print("ℹ️ Banco de dados já existe.", file=sys.stderr)
+            app.logger.info("ℹ️ Banco de dados já existe.")
 
 def criar_admin_master():
     admin = Usuario.query.filter_by(username="Arthur").first()
@@ -643,22 +653,19 @@ def criar_admin_master():
         )
         db.session.add(novo_admin)
         db.session.commit()
-        print("✅ Admin Arthur criado!", file=sys.stderr)
+        app.logger.info("✅ Admin Arthur criado!")
+
+# Executa inicialização antes de receber requisições
 try:
-    init_db()
     with app.app_context():
+        init_db()
         criar_admin_master()
-except Exception as e:
-    print("❌ Erro ao inicializar banco de dados:", file=sys.stderr)
-    traceback.print_exc()
-    # --- AQUECIMENTO (WARMUP) PARA EVITAR TIMEOUT NO RAILWAY ---
-with app.app_context():
-    # Pré-carrega alguns dados ou simplesmente executa uma query simples
-    try:
+        # Warmup
         Usuario.query.first()
-        print("✅ Warmup concluído.", file=sys.stderr)
-    except Exception as e:
-        print("⚠️ Warmup falhou, mas ignorado:", e, file=sys.stderr)
+        app.logger.info("✅ Warmup concluído.")
+except Exception as e:
+    app.logger.error(f"❌ Erro durante inicialização: {e}", exc_info=True)
+
 # --- PONTO DE ENTRADA PARA DESENVOLVIMENTO LOCAL ---
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
