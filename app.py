@@ -1,17 +1,14 @@
 import os
 import sys
-import traceback
+import base64
 import logging
 
-# --- Cloudinary (opcional) ---
 try:
     import cloudinary
     import cloudinary.uploader
-    import cloudinary.api
     CLOUDINARY_AVAILABLE = True
 except ImportError:
     CLOUDINARY_AVAILABLE = False
-    logging.warning("Cloudinary não está instalado. Upload de fotos desabilitado.")
 
 from flask import Flask, render_template, request, redirect, url_for, flash, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -25,25 +22,30 @@ base_dir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'saleshub_2026_secure_key_dev')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(base_dir, 'feira.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+    'DATABASE_URL',
+    'sqlite:///' + os.path.join(base_dir, 'feira.db')
+)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Configura logging básico
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 
-# Configuração do Cloudinary (segura)
-if CLOUDINARY_AVAILABLE:
-    try:
-        cloudinary.config(
-            cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
-            api_key=os.environ.get('CLOUDINARY_API_KEY'),
-            api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
-            secure=True
-        )
-        app.logger.info("Cloudinary configurado com sucesso.")
-    except Exception as e:
-        app.logger.error(f"Erro ao configurar Cloudinary: {e}. Upload de fotos desabilitado.")
-        CLOUDINARY_AVAILABLE = False
+# --- CLOUDINARY: só ativa se TODAS as variáveis estiverem presentes ---
+CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME')
+CLOUD_KEY = os.environ.get('CLOUDINARY_API_KEY')
+CLOUD_SECRET = os.environ.get('CLOUDINARY_API_SECRET')
+
+if CLOUDINARY_AVAILABLE and CLOUD_NAME and CLOUD_KEY and CLOUD_SECRET:
+    cloudinary.config(
+        cloud_name=CLOUD_NAME,
+        api_key=CLOUD_KEY,
+        api_secret=CLOUD_SECRET,
+        secure=True
+    )
+    app.logger.info("✅ Cloudinary ativo.")
+else:
+    CLOUDINARY_AVAILABLE = False
+    app.logger.warning("⚠️ Cloudinary inativo. Fotos salvas em base64 local.")
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -65,8 +67,7 @@ class Usuario(UserMixin, db.Model):
     professor_responsavel = db.Column(db.String(50), nullable=True)
     ip_registro = db.Column(db.String(50), nullable=True)
     dispositivo = db.Column(db.String(255), nullable=True)
-    # Campos de perfil
-    foto_perfil = db.Column(db.Text, nullable=True)  # URL do Cloudinary
+    foto_perfil = db.Column(db.Text, nullable=True)
     serie = db.Column(db.String(50), nullable=True)
     descricao = db.Column(db.Text, nullable=True)
 
@@ -124,7 +125,7 @@ class MembroBarraca(db.Model):
 def load_user(user_id):
     return Usuario.query.get(int(user_id))
 
-# --- FUNÇÕES AUXILIARES DE PERMISSÃO ---
+# --- PERMISSÕES ---
 
 def usuario_pode_criar_produto(usuario, barraca_id):
     if usuario.id == barraca_id:
@@ -144,7 +145,74 @@ def usuario_pode_gerenciar_membros(usuario, barraca_id):
     membro = MembroBarraca.query.filter_by(usuario_id=usuario.id, barraca_id=barraca_id, status='aprovado').first()
     return membro and membro.pode_gerenciar_membros
 
-# --- ROTAS DE GERENCIAMENTO DE PRODUTOS ---
+# --- PERFIL ---
+# Rota /perfil → perfil do próprio usuário logado
+# Rota /perfil/<id> → perfil de qualquer usuário (somente leitura se não for o dono)
+
+@app.route("/perfil", methods=["GET", "POST"])
+@app.route("/perfil/<int:usuario_id>", methods=["GET", "POST"])
+@login_required
+def perfil(usuario_id=None):
+    # Se não passou ID, usa o usuário logado
+    if usuario_id is None:
+        usuario = current_user
+    else:
+        usuario = Usuario.query.get_or_404(usuario_id)
+
+    is_self = current_user.id == usuario.id
+
+    if request.method == "POST":
+        if not is_self and not current_user.is_admin:
+            flash("Você não tem permissão para alterar este perfil.", "erro")
+            return redirect(url_for('perfil', usuario_id=usuario.id))
+
+        usuario.serie = request.form.get('serie', '').strip() or None
+        usuario.descricao = request.form.get('descricao', '').strip() or None
+
+        foto = request.files.get('foto_perfil')
+        if foto and foto.filename:
+            if CLOUDINARY_AVAILABLE:
+                try:
+                    resultado = cloudinary.uploader.upload(
+                        foto,
+                        folder="saleshub_perfis",
+                        public_id=f"user_{usuario.id}",
+                        overwrite=True,
+                        transformation={
+                            'width': 300, 'height': 300,
+                            'crop': 'fill', 'gravity': 'face'
+                        }
+                    )
+                    usuario.foto_perfil = resultado['secure_url']
+                except Exception as e:
+                    app.logger.error(f"Erro Cloudinary: {e}")
+                    flash("Erro ao enviar foto. Tente novamente.", "erro")
+                    return redirect(url_for('perfil'))
+            else:
+                # Fallback: salva em base64 no banco
+                try:
+                    dados = base64.b64encode(foto.read()).decode('utf-8')
+                    usuario.foto_perfil = f"data:{foto.mimetype};base64,{dados}"
+                except Exception as e:
+                    app.logger.error(f"Erro base64: {e}")
+                    flash("Erro ao processar foto.", "erro")
+                    return redirect(url_for('perfil'))
+
+        db.session.commit()
+        flash("Perfil atualizado com sucesso!", "sucesso")
+        return redirect(url_for('perfil'))
+
+    barraca = None
+    if usuario.tipo == 'vendedor':
+        barraca = usuario
+    else:
+        associacao = MembroBarraca.query.filter_by(usuario_id=usuario.id, status='aprovado').first()
+        if associacao:
+            barraca = associacao.barraca
+
+    return render_template('perfil.html', usuario=usuario, barraca=barraca, is_self=is_self)
+
+# --- PRODUTOS ---
 
 @app.route("/meus_produtos", methods=["GET", "POST"])
 @login_required
@@ -193,7 +261,7 @@ def deletar_produto(id):
         flash("Acesso negado.", "erro")
     return redirect(url_for('meus_produtos'))
 
-# --- ROTAS DE ADMINISTRAÇÃO ---
+# --- ADMINISTRAÇÃO ---
 
 @app.route('/admin')
 @login_required
@@ -217,8 +285,7 @@ def admin_panel():
     barracas_lideres = Usuario.query.filter_by(tipo='vendedor').all()
     membros_por_barraca = {}
     for barraca in barracas_lideres:
-        membros = MembroBarraca.query.filter_by(barraca_id=barraca.id).all()
-        membros_por_barraca[barraca.id] = membros
+        membros_por_barraca[barraca.id] = MembroBarraca.query.filter_by(barraca_id=barraca.id).all()
 
     return render_template('admin.html',
                            total_usuarios=total_usuarios,
@@ -239,8 +306,7 @@ def toggle_admin(id):
     else:
         u.is_admin = not u.is_admin
         db.session.commit()
-        status = "promovido" if u.is_admin else "rebaixado"
-        flash(f"Usuário {u.username} foi {status}!", "sucesso")
+        flash(f"Usuário {u.username} foi {'promovido' if u.is_admin else 'rebaixado'}!", "sucesso")
     return redirect(url_for('admin_panel'))
 
 @app.route('/admin/reset_password/<int:id>', methods=['POST'])
@@ -304,16 +370,14 @@ def index():
     membros_por_barraca = {}
     for b in barracas:
         associacoes = MembroBarraca.query.filter_by(barraca_id=b.id, status='aprovado').all()
-        membros_aprovados = [assoc.usuario for assoc in associacoes]
         membros_por_barraca[b.id] = {
             'lider': b,
-            'membros': membros_aprovados
+            'membros': [a.usuario for a in associacoes]
         }
 
     is_membro_ativo = False
     if current_user.is_authenticated and current_user.tipo == 'cliente':
-        associacao = MembroBarraca.query.filter_by(usuario_id=current_user.id, status='aprovado').first()
-        if associacao:
+        if MembroBarraca.query.filter_by(usuario_id=current_user.id, status='aprovado').first():
             is_membro_ativo = True
 
     return render_template("index.html",
@@ -334,10 +398,8 @@ def ver_barraca(usuario_id):
 
     if request.method == "POST":
         if 'nota' in request.form:
-            nota = request.form.get('nota')
-            comentario = request.form.get('comentario', '').strip()
             try:
-                nota_int = int(nota)
+                nota_int = int(request.form.get('nota'))
                 if nota_int < 1 or nota_int > 5:
                     flash("Nota deve ser entre 1 e 5.", "erro")
                     return redirect(url_for('ver_barraca', usuario_id=usuario_id))
@@ -349,18 +411,17 @@ def ver_barraca(usuario_id):
                 flash("Você não pode avaliar sua própria barraca.", "erro")
                 return redirect(url_for('ver_barraca', usuario_id=usuario_id))
 
-            ja_avaliou = Avaliacao.query.filter_by(autor_id=current_user.id, barraca_id=usuario_id).first()
-            if ja_avaliou:
+            if Avaliacao.query.filter_by(autor_id=current_user.id, barraca_id=usuario_id).first():
                 flash("Você já avaliou esta barraca.", "erro")
                 return redirect(url_for('ver_barraca', usuario_id=usuario_id))
 
-            nova_avaliacao = Avaliacao(
+            comentario = request.form.get('comentario', '').strip()
+            db.session.add(Avaliacao(
                 nota=nota_int,
-                comentario=comentario if comentario else None,
+                comentario=comentario or None,
                 autor_id=current_user.id,
                 barraca_id=barraca.id
-            )
-            db.session.add(nova_avaliacao)
+            ))
             db.session.commit()
             flash("Avaliação enviada com sucesso!", "sucesso")
             return redirect(url_for('ver_barraca', usuario_id=usuario_id))
@@ -371,16 +432,20 @@ def ver_barraca(usuario_id):
             qtd_str = request.form.get(f"qtd_{p.id}", "0")
             qtd = int(qtd_str) if qtd_str.isdigit() else 0
             if qtd > 0:
-                total_pedido += (p.preco * qtd)
+                total_pedido += p.preco * qtd
                 itens_selecionados.append({'p': p, 'qtd': qtd})
+
         if total_pedido > 0:
             novo_pedido = Pedido(valor_total=total_pedido, cliente_id=current_user.id, vendedor_id=barraca.id)
             db.session.add(novo_pedido)
             db.session.flush()
             for item in itens_selecionados:
-                ip = ItemPedido(pedido_id=novo_pedido.id, produto_nome=item['p'].nome,
-                                quantidade=item['qtd'], preco_unitario=item['p'].preco)
-                db.session.add(ip)
+                db.session.add(ItemPedido(
+                    pedido_id=novo_pedido.id,
+                    produto_nome=item['p'].nome,
+                    quantidade=item['qtd'],
+                    preco_unitario=item['p'].preco
+                ))
             db.session.commit()
             return render_template("pagamento_pix.html", pedido=novo_pedido, barraca=barraca)
         else:
@@ -394,12 +459,14 @@ def ver_barraca(usuario_id):
 def deletar_avaliacao(id):
     av = Avaliacao.query.get_or_404(id)
     if av.autor_id == current_user.id or current_user.is_admin:
+        barraca_id = av.barraca_id
         db.session.delete(av)
         db.session.commit()
         flash("Avaliação removida.", "sucesso")
     else:
         flash("Acesso negado.", "erro")
-    return redirect(url_for('ver_barraca', usuario_id=av.barraca_id))
+        barraca_id = av.barraca_id
+    return redirect(url_for('ver_barraca', usuario_id=barraca_id))
 
 @app.route("/dashboard")
 @login_required
@@ -417,36 +484,29 @@ def dashboard():
 
     barraca = Usuario.query.get(barraca_id)
     pendentes = Pedido.query.filter_by(vendedor_id=barraca_id, status='Pendente').order_by(Pedido.data_hora.desc()).all()
-
     for p in pendentes:
         p.pode_confirmar = usuario_pode_confirmar_pedido(current_user, barraca_id)
 
     confirmados = Pedido.query.filter_by(vendedor_id=barraca_id, status='Confirmado').order_by(Pedido.data_hora.desc()).all()
     total_ganho = sum(p.valor_total for p in confirmados)
-    media_valor = total_ganho / len(confirmados) if len(confirmados) > 0 else 0
+    media_valor = total_ganho / len(confirmados) if confirmados else 0
 
-    solicitacoes = []
-    membros_aprovados = []
+    solicitacoes, membros_aprovados = [], []
     if is_lider:
         solicitacoes = MembroBarraca.query.filter_by(barraca_id=barraca_id, status='pendente').all()
         membros_aprovados = MembroBarraca.query.filter_by(barraca_id=barraca_id, status='aprovado').all()
 
     return render_template("dashboard.html",
-                           pendentes=pendentes,
-                           confirmadas=confirmados,
-                           total=total_ganho,
-                           media=media_valor,
-                           barraca=barraca,
-                           is_lider=is_lider,
-                           solicitacoes=solicitacoes,
-                           membros_aprovados=membros_aprovados)
+                           pendentes=pendentes, confirmadas=confirmados,
+                           total=total_ganho, media=media_valor,
+                           barraca=barraca, is_lider=is_lider,
+                           solicitacoes=solicitacoes, membros_aprovados=membros_aprovados)
 
 @app.route("/confirmar_pedido/<int:id>")
 @login_required
 def confirmar_pedido(id):
     pedido = Pedido.query.get_or_404(id)
-    barraca_id = pedido.vendedor_id
-    if usuario_pode_confirmar_pedido(current_user, barraca_id) or current_user.is_admin:
+    if usuario_pode_confirmar_pedido(current_user, pedido.vendedor_id) or current_user.is_admin:
         pedido.status = 'Confirmado'
         db.session.commit()
         flash("Pagamento confirmado com sucesso!", "sucesso")
@@ -454,7 +514,7 @@ def confirmar_pedido(id):
         flash("Você não tem permissão para confirmar pedidos.", "erro")
     return redirect(url_for('dashboard'))
 
-# --- GERENCIAMENTO DE MEMBROS ---
+# --- MEMBROS ---
 
 @app.route("/gerenciar_membros", methods=["GET", "POST"])
 @login_required
@@ -466,9 +526,7 @@ def gerenciar_membros():
     barraca_id = current_user.id
     if request.method == "POST":
         acao = request.form.get("acao")
-        membro_id = request.form.get("membro_id")
-        membro = MembroBarraca.query.get_or_404(membro_id)
-
+        membro = MembroBarraca.query.get_or_404(request.form.get("membro_id"))
         if membro.barraca_id != barraca_id:
             abort(403)
 
@@ -488,12 +546,9 @@ def gerenciar_membros():
             flash("Permissões atualizadas.", "sucesso")
         return redirect(url_for('gerenciar_membros'))
 
-    solicitacoes = MembroBarraca.query.filter_by(barraca_id=barraca_id, status='pendente').all()
-    membros_aprovados = MembroBarraca.query.filter_by(barraca_id=barraca_id, status='aprovado').all()
-
     return render_template("gerenciar_membros.html",
-                           solicitacoes=solicitacoes,
-                           membros_aprovados=membros_aprovados)
+                           solicitacoes=MembroBarraca.query.filter_by(barraca_id=barraca_id, status='pendente').all(),
+                           membros_aprovados=MembroBarraca.query.filter_by(barraca_id=barraca_id, status='aprovado').all())
 
 # --- AUTENTICAÇÃO ---
 
@@ -534,13 +589,7 @@ def cadastro():
             )
             db.session.add(novo)
             db.session.flush()
-
-            solicitacao = MembroBarraca(
-                usuario_id=novo.id,
-                barraca_id=int(barraca_id),
-                status='pendente'
-            )
-            db.session.add(solicitacao)
+            db.session.add(MembroBarraca(usuario_id=novo.id, barraca_id=int(barraca_id), status='pendente'))
             db.session.commit()
             flash("Conta criada! Aguarde a aprovação do líder da barraca.", "sucesso")
             login_user(novo)
@@ -568,10 +617,7 @@ def login():
             flash(f"Bem-vindo de volta, {user.username}!", "sucesso")
             if user.is_admin:
                 return redirect(url_for("admin_panel"))
-            if user.tipo == 'vendedor':
-                return redirect(url_for("dashboard"))
-            else:
-                return redirect(url_for("index"))
+            return redirect(url_for("dashboard") if user.tipo == 'vendedor' else url_for("index"))
         flash("Usuário ou senha incorretos.", "erro")
     return render_template("login.html")
 
@@ -580,93 +626,42 @@ def logout():
     logout_user()
     return redirect(url_for("index"))
 
-@app.route('/perfil/<int:usuario_id>', methods=['GET', 'POST'])
-@login_required
-def perfil(usuario_id):
-    usuario = Usuario.query.get_or_404(usuario_id)
-    is_self = current_user.is_authenticated and current_user.id == usuario.id
+# --- HEALTH CHECK (Railway) ---
 
-    if request.method == 'POST':
-        if not is_self and not current_user.is_admin:
-            flash("Você não tem permissão para alterar este perfil.", "erro")
-            return redirect(url_for('perfil', usuario_id=usuario.id))
-
-        usuario.serie = request.form.get('serie', usuario.serie)
-        usuario.descricao = request.form.get('descricao', usuario.descricao)
-
-        if 'foto_perfil' in request.files:
-            foto = request.files['foto_perfil']
-            if foto.filename != '':
-                if CLOUDINARY_AVAILABLE:
-                    try:
-                        upload_result = cloudinary.uploader.upload(
-                            foto,
-                            folder="saleshub_perfis",
-                            public_id=f"user_{usuario.id}",
-                            overwrite=True,
-                            transformation={'width': 300, 'height': 300, 'crop': 'fill', 'gravity': 'face'}
-                        )
-                        usuario.foto_perfil = upload_result['secure_url']
-                    except Exception as e:
-                        flash(f"Erro ao enviar a foto: {str(e)}", "erro")
-                        return redirect(url_for('perfil', usuario_id=usuario.id))
-                else:
-                    flash("Upload de fotos não configurado no servidor.", "erro")
-
-        db.session.commit()
-        flash("Perfil atualizado com sucesso!", "sucesso")
-        return redirect(url_for('perfil', usuario_id=usuario.id))
-
-    barraca = None
-    if usuario.tipo == 'vendedor':
-        barraca = usuario
-    else:
-        associacao = MembroBarraca.query.filter_by(usuario_id=usuario.id, status='aprovado').first()
-        if associacao:
-            barraca = associacao.barraca
-
-    return render_template('perfil.html', usuario=usuario, barraca=barraca, is_self=is_self)
-
-# --- ROTA DE SAÚDE PARA O RAILWAY ---
 @app.route('/health')
 def health():
-    app.logger.info("Health check acessado com sucesso.")
     return 'OK', 200
 
-# --- INICIALIZAÇÃO SEGURA DO BANCO DE DADOS ---
-def init_db():
-    with app.app_context():
-        inspector = inspect(db.engine)
-        if not inspector.has_table("usuario"):
-            db.create_all()
-            app.logger.info("✅ Tabelas criadas com sucesso.")
-        else:
-            app.logger.info("ℹ️ Banco de dados já existe.")
+# --- INICIALIZAÇÃO ---
 
 def criar_admin_master():
-    admin = Usuario.query.filter_by(username="Arthur").first()
-    if not admin:
-        senha_hash = generate_password_hash("zayron")
-        novo_admin = Usuario(
-            username="Arthur", senha=senha_hash, tipo="vendedor", is_admin=True,
+    if not Usuario.query.filter_by(username="Arthur").first():
+        db.session.add(Usuario(
+            username="Arthur",
+            senha=generate_password_hash("zayron"),
+            tipo="vendedor", is_admin=True,
             nome_barraca="Administração Central", turma="TI"
-        )
-        db.session.add(novo_admin)
+        ))
         db.session.commit()
         app.logger.info("✅ Admin Arthur criado!")
 
-# Executa inicialização antes de receber requisições
-try:
-    with app.app_context():
+def init_db():
+    inspector = inspect(db.engine)
+    if not inspector.has_table("usuario"):
+        db.create_all()
+        app.logger.info("✅ Tabelas criadas.")
+    else:
+        app.logger.info("ℹ️ Banco já existe.")
+
+# Inicialização executada apenas uma vez no boot
+with app.app_context():
+    try:
         init_db()
         criar_admin_master()
-        # Warmup
-        Usuario.query.first()
-        app.logger.info("✅ Warmup concluído.")
-except Exception as e:
-    app.logger.error(f"❌ Erro durante inicialização: {e}", exc_info=True)
+        app.logger.info("✅ App inicializado com sucesso.")
+    except Exception as e:
+        app.logger.error(f"❌ Erro na inicialização: {e}", exc_info=True)
 
-# --- PONTO DE ENTRADA PARA DESENVOLVIMENTO LOCAL ---
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
-    app.run(debug=True, host="0.0.0.0", port=port)
+    app.run(debug=False, host="0.0.0.0", port=port)
