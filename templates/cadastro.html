@@ -228,13 +228,6 @@
             line-height: 1;
         }
 
-        /* ── SEPARADOR ── */
-        .divider {
-            border: none;
-            border-top: 1px solid var(--border);
-            margin: 18px 0;
-        }
-
         /* ── CAMPOS VENDEDOR ── */
         #camposVendedor { display: none; }
 
@@ -269,6 +262,21 @@
         .footer-link span {
             color: var(--accent);
             font-weight: 700;
+        }
+
+        /* ESTILOS PARA ASSOCIAÇÃO (VENDEDOR) */
+        .associacao-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .associacao-check input {
+            width: 18px; height: 18px;
+            accent-color: var(--accent);
+        }
+        .select-barraca {
+            margin-top: 12px;
         }
     </style>
 </head>
@@ -305,11 +313,11 @@
 
     <form method="POST">
 
-        <!-- SELETOR DE TIPO -->
+        <!-- SELETOR DE TIPO (cliente ou vendedor) -->
         <div class="tipo-grid">
             <div class="tipo-btn active" id="btn-cliente" onclick="setTipo('cliente')">
                 <div class="tipo-btn-icon">🛒</div>
-                <span class="tipo-btn-label">Comprador</span>
+                <span class="tipo-btn-label">Cliente</span>
                 <span class="tipo-btn-sub">Quero comprar</span>
             </div>
             <div class="tipo-btn" id="btn-vendedor" onclick="setTipo('vendedor')">
@@ -320,6 +328,30 @@
         </div>
 
         <input type="hidden" name="tipo" id="tipoHidden" value="cliente">
+        <input type="hidden" name="papel" id="papelHidden" value="lider">
+
+        <!-- SEÇÃO DE PAPEL (SÓ PARA VENDEDOR: LÍDER OU MEMBRO) -->
+        <div class="form-card" id="cardPapel" style="display: none;">
+            <div class="form-section-header">Tipo de Vendedor</div>
+            <div class="form-body">
+                <div class="associacao-check">
+                    <input type="checkbox" id="checkMembro" onchange="toggleMembro()">
+                    <label for="checkMembro" style="cursor: pointer; font-weight: 600;">Desejo me associar a uma barraca existente como membro</label>
+                </div>
+                <p class="papel-desc" id="descVendedor">Você será o <strong>Líder</strong> da sua própria barraca.</p>
+                
+                <div id="selectBarracaContainer" style="display: none;" class="select-barraca">
+                    <label class="field-label">Escolha a barraca</label>
+                    <select name="barraca_id" id="barracaSelect">
+                        <option value="" disabled selected>Selecione uma barraca</option>
+                        {% for b in barracas %}
+                        <option value="{{ b.id }}">{{ b.nome_barraca }} ({{ b.turma }})</option>
+                        {% endfor %}
+                    </select>
+                    <p class="papel-desc" style="margin-top: 8px;"><strong>Após o cadastro, aguarde a aprovação do líder.</strong></p>
+                </div>
+            </div>
+        </div>
 
         <!-- ACESSO -->
         <div class="form-card">
@@ -339,7 +371,7 @@
             </div>
         </div>
 
-        <!-- CAMPOS VENDEDOR -->
+        <!-- CAMPOS VENDEDOR (aparecem apenas se for Vendedor Líder) -->
         <div id="camposVendedor">
             <div class="form-card">
                 <div class="form-section-header">Detalhes da Barraca</div>
@@ -386,20 +418,73 @@
 </div>
 
 <script>
+    const tipoHidden = document.getElementById('tipoHidden');
+    const papelHidden = document.getElementById('papelHidden');
+    const btnCliente = document.getElementById('btn-cliente');
+    const btnVendedor = document.getElementById('btn-vendedor');
+    const camposVendedor = document.getElementById('camposVendedor');
+    const cardPapel = document.getElementById('cardPapel');
+    const checkMembro = document.getElementById('checkMembro');
+    const selectContainer = document.getElementById('selectBarracaContainer');
+    const barracaSelect = document.getElementById('barracaSelect');
+    const descVendedor = document.getElementById('descVendedor');
+
     function setTipo(tipo) {
-        document.getElementById('tipoHidden').value = tipo;
+        tipoHidden.value = tipo;
+        btnCliente.classList.toggle('active', tipo === 'cliente');
+        btnVendedor.classList.toggle('active', tipo === 'vendedor');
 
-        document.getElementById('btn-cliente').classList.toggle('active', tipo === 'cliente');
-        document.getElementById('btn-vendedor').classList.toggle('active', tipo === 'vendedor');
+        if (tipo === 'vendedor') {
+            // Mostra card de escolha Líder/Membro
+            cardPapel.style.display = 'block';
+            // Reseta checkbox e atualiza visual
+            checkMembro.checked = false;
+            toggleMembro();
+        } else {
+            // Cliente: sem card de papel, sempre cliente comum
+            cardPapel.style.display = 'none';
+            camposVendedor.style.display = 'none';
+            papelHidden.value = 'lider';  // cliente comum
+            tipoHidden.value = 'cliente';
+            
+            // Remove required dos campos de vendedor
+            document.getElementById('nome_barraca').required = false;
+            document.getElementById('turma').required = false;
+            document.getElementById('professor').required = false;
+            document.getElementById('pix').required = false;
+        }
+    }
 
-        const campos = document.getElementById('camposVendedor');
-        campos.style.display = tipo === 'vendedor' ? 'block' : 'none';
-
-        const fields = ['nome_barraca', 'turma', 'professor', 'pix'];
-        fields.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.required = tipo === 'vendedor';
-        });
+    function toggleMembro() {
+        const isMembro = checkMembro.checked;
+        selectContainer.style.display = isMembro ? 'block' : 'none';
+        barracaSelect.required = isMembro;
+        
+        if (isMembro) {
+            // Vendedor que será membro -> tratado como cliente + membro
+            tipoHidden.value = 'cliente';
+            papelHidden.value = 'membro';
+            camposVendedor.style.display = 'none';
+            descVendedor.innerHTML = 'Você será vinculado a uma barraca existente como <strong>membro</strong>.';
+            
+            // Remove required dos campos de vendedor
+            document.getElementById('nome_barraca').required = false;
+            document.getElementById('turma').required = false;
+            document.getElementById('professor').required = false;
+            document.getElementById('pix').required = false;
+        } else {
+            // Vendedor Líder
+            tipoHidden.value = 'vendedor';
+            papelHidden.value = 'lider';
+            camposVendedor.style.display = 'block';
+            descVendedor.innerHTML = 'Você será o <strong>Líder</strong> da sua própria barraca.';
+            
+            // Torna obrigatórios
+            document.getElementById('nome_barraca').required = true;
+            document.getElementById('turma').required = true;
+            document.getElementById('professor').required = true;
+            document.getElementById('pix').required = true;
+        }
     }
 
     function toggleSenha() {
@@ -410,7 +495,11 @@
         icon.textContent = isHidden ? '🙈' : '👁️';
     }
 
+    // Inicialização: começa como Cliente
     setTipo('cliente');
+    
+    // Event listeners
+    checkMembro.addEventListener('change', toggleMembro);
 </script>
 
 </body>
