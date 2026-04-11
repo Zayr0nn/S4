@@ -107,11 +107,23 @@
             color: #fff;
             letter-spacing: -0.3px;
             margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .profile-meta {
             font-size: 13px;
             color: rgba(255,255,255,0.65);
+        }
+
+        .role-badge {
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
         }
 
         /* ── MÉTRICAS ── */
@@ -161,23 +173,25 @@
 
         .metric-value.green { color: var(--green); }
 
-        /* ── PEDIDOS ── */
-        .orders-card {
+        /* ── CARDS GERAIS ── */
+        .card {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 18px;
             overflow: hidden;
+            margin-bottom: 20px;
         }
 
-        .orders-header {
+        .card-header {
             padding: 14px 18px;
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            background: var(--surface2);
         }
 
-        .orders-title {
+        .card-title {
             font-size: 14px;
             font-weight: 700;
             color: var(--text);
@@ -202,7 +216,8 @@
             border: 1px solid rgba(34,197,94,0.2);
         }
 
-        .order-item {
+        /* ── LISTA DE ITENS ── */
+        .list-item {
             display: flex;
             align-items: center;
             padding: 14px 18px;
@@ -210,7 +225,7 @@
             gap: 12px;
         }
 
-        .order-item:last-child { border-bottom: none; }
+        .list-item:last-child { border-bottom: none; }
 
         .order-icon {
             width: 38px; height: 38px;
@@ -259,6 +274,57 @@
             font-weight: 600;
             padding-top: 10px;
         }
+
+        /* ── ESTILOS PARA GERENCIAMENTO DE MEMBROS ── */
+        .membro-nome {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .coroa {
+            color: var(--gold);
+            font-size: 14px;
+        }
+        .permission-form {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .permission-check {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--muted2);
+        }
+        .btn-sm {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border2);
+            color: var(--text);
+        }
+        .btn-danger {
+            background: var(--danger);
+        }
+        .flex-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .mt-2 { margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -280,9 +346,22 @@
 <!-- PERFIL -->
 <div class="profile-section">
     <div class="profile-card">
-        <p class="profile-label">Minha Barraca</p>
-        <h2 class="profile-name">{{ current_user.nome_barraca }}</h2>
-        <p class="profile-meta">{{ current_user.turma }} &nbsp;·&nbsp; Prof. {{ current_user.professor_responsavel }}</p>
+        <p class="profile-label">
+            {% if is_lider %}
+                Minha Barraca
+            {% else %}
+                Barraca Associada
+            {% endif %}
+        </p>
+        <h2 class="profile-name">
+            {{ barraca.nome_barraca }}
+            {% if is_lider %}
+                <span class="role-badge">👑 Líder</span>
+            {% else %}
+                <span class="role-badge">Membro</span>
+            {% endif %}
+        </h2>
+        <p class="profile-meta">{{ barraca.turma }} &nbsp;·&nbsp; Prof. {{ barraca.professor_responsavel }}</p>
     </div>
 </div>
 
@@ -301,17 +380,98 @@
     </div>
 </div>
 
-<!-- PENDENTES -->
+<!-- SEÇÃO EXCLUSIVA PARA LÍDERES: GERENCIAR MEMBROS -->
+{% if is_lider %}
+<!-- SOLICITAÇÕES PENDENTES -->
+<div class="section">
+    <p class="section-title">Solicitações de Membros</p>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Pendentes de Aprovação</span>
+            <span class="badge badge-warn">{{ solicitacoes|length }}</span>
+        </div>
+        {% for s in solicitacoes %}
+        <div class="list-item">
+            <div style="flex:1;">
+                <span class="membro-nome">{{ s.usuario.username }}</span>
+                <div style="font-size: 12px; color: var(--muted);">
+                    Solicitado em {{ s.data_solicitacao.strftime('%d/%m/%Y %H:%M') }}
+                </div>
+            </div>
+            <div class="flex-row">
+                <form method="POST" action="{{ url_for('gerenciar_membros') }}" style="display:inline;">
+                    <input type="hidden" name="membro_id" value="{{ s.id }}">
+                    <input type="hidden" name="acao" value="aprovar">
+                    <button type="submit" class="btn-sm">Aprovar</button>
+                </form>
+                <form method="POST" action="{{ url_for('gerenciar_membros') }}" style="display:inline;">
+                    <input type="hidden" name="membro_id" value="{{ s.id }}">
+                    <input type="hidden" name="acao" value="rejeitar">
+                    <button type="submit" class="btn-sm btn-danger">Rejeitar</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">Nenhuma solicitação pendente.</div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- MEMBROS APROVADOS E PERMISSÕES -->
+<div class="section">
+    <p class="section-title">Equipe (Membros Aprovados)</p>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Gerenciar Permissões</span>
+        </div>
+        {% for m in membros_aprovados %}
+        <div class="list-item">
+            <div style="flex:1;">
+                <span class="membro-nome">
+                    {{ m.usuario.username }}
+                    {% if m.pode_gerenciar_membros %}
+                        <span class="coroa" title="Gerente">⚡</span>
+                    {% endif %}
+                </span>
+                <div style="font-size: 12px; color: var(--muted);">
+                    Membro desde {{ m.data_solicitacao.strftime('%d/%m/%Y') }}
+                </div>
+                <form method="POST" action="{{ url_for('gerenciar_membros') }}" class="permission-form">
+                    <input type="hidden" name="membro_id" value="{{ m.id }}">
+                    <input type="hidden" name="acao" value="atualizar_permissoes">
+                    <label class="permission-check">
+                        <input type="checkbox" name="pode_criar_produto" {% if m.pode_criar_produto %}checked{% endif %}> Criar produtos
+                    </label>
+                    <label class="permission-check">
+                        <input type="checkbox" name="pode_confirmar_pedido" {% if m.pode_confirmar_pedido %}checked{% endif %}> Confirmar pedidos
+                    </label>
+                    <label class="permission-check">
+                        <input type="checkbox" name="pode_gerenciar_membros" {% if m.pode_gerenciar_membros %}checked{% endif %}> Gerenciar membros
+                    </label>
+                    <div class="mt-2">
+                        <button type="submit" class="btn-sm btn-outline">Salvar Permissões</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">Nenhum membro aprovado ainda.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- PENDENTES (PEDIDOS) -->
 {% if pendentes %}
 <div class="section">
     <p class="section-title">Aguardando Confirmação</p>
-    <div class="orders-card">
-        <div class="orders-header">
-            <span class="orders-title">Pagamentos Pendentes</span>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Pagamentos Pendentes</span>
             <span class="badge badge-warn">{{ pendentes|length }} pendente{{ 's' if pendentes|length > 1 }}</span>
         </div>
         {% for p in pendentes %}
-        <div class="order-item">
+        <div class="list-item">
             <div class="order-icon pending">⏳</div>
             <div class="order-info">
                 <p class="order-id">Pedido #{{ p.id }}</p>
@@ -319,7 +479,11 @@
             </div>
             <div class="order-right">
                 <p class="order-value">R$ {{ "%.2f"|format(p.valor_total) }}</p>
+                {% if p.pode_confirmar %}
                 <a href="{{ url_for('confirmar_pedido', id=p.id) }}" class="btn-confirm">✓ CONFIRMAR</a>
+                {% else %}
+                <span style="font-size: 11px; color: var(--muted);">Aguardando líder</span>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
@@ -330,13 +494,13 @@
 <!-- HISTÓRICO -->
 <div class="section">
     <p class="section-title">Histórico de Vendas</p>
-    <div class="orders-card">
-        <div class="orders-header">
-            <span class="orders-title">Vendas Confirmadas</span>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Vendas Confirmadas</span>
             <span class="badge badge-green">{{ confirmadas|length }} venda{{ 's' if confirmadas|length > 1 }}</span>
         </div>
         {% for venda in confirmadas %}
-        <div class="order-item">
+        <div class="list-item">
             <div class="order-icon confirmed">✓</div>
             <div class="order-info">
                 <p class="order-id">Pedido #{{ venda.id }}</p>
