@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gerenciar Membros — SalesHub</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #13131a;
+            --surface2: #1c1c26;
+            --border: rgba(255,255,255,0.07);
+            --border2: rgba(255,255,255,0.12);
+            --accent: #7c6ef7;
+            --green: #22c55e;
+            --green-dim: rgba(34,197,94,0.12);
+            --gold: #f59e0b;
+            --gold-dim: rgba(245,158,11,0.1);
+            --text: #f1f0ff;
+            --muted: #6e6a8a;
+            --muted2: #9e9bb8;
+            --danger: #ef4444;
+            --warn: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo-icon {
+            width: 34px; height: 34px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .logo-icon svg { width: 18px; height: 18px; }
+        .logo-text { font-size: 17px; font-weight: 700; }
+        .link-danger { color: var(--danger); text-decoration: none; font-size: 13px; font-weight: 600; }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 24px 20px 0;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface2);
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 20px;
+        }
+
+        .badge-warn {
+            background: var(--gold-dim);
+            color: var(--warn);
+            border: 1px solid rgba(245,158,11,0.2);
+        }
+
+        .badge-green {
+            background: var(--green-dim);
+            color: var(--green);
+            border: 1px solid rgba(34,197,94,0.2);
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            gap: 12px;
+        }
+
+        .list-item:last-child { border-bottom: none; }
+
+        .membro-info { flex: 1; }
+        .membro-nome {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .coroa { color: var(--gold); font-size: 14px; }
+        .membro-data {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        .btn-sm {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border2);
+            color: var(--text);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        .permission-form {
+            margin-top: 10px;
+        }
+
+        .permission-check {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--muted2);
+            margin-bottom: 4px;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            padding-top: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 28px 20px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="logo">
+        <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+        </div>
+        <span class="logo-text">SalesHub</span>
+    </div>
+    <a href="{{ url_for('logout') }}" class="link-danger">Sair</a>
+</div>
+
+<div class="container">
+    <h2 style="margin-bottom: 20px; font-size: 20px; font-weight: 700;">Gerenciar Equipe</h2>
+
+    <!-- SOLICITAÇÕES PENDENTES -->
+    <div class="section-title">Solicitações Pendentes</div>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Aguardando Aprovação</span>
+            <span class="badge badge-warn">{{ solicitacoes|length }}</span>
+        </div>
+        {% for s in solicitacoes %}
+        <div class="list-item">
+            <div class="membro-info">
+                <span class="membro-nome">{{ s.usuario.username }}</span>
+                <div class="membro-data">Solicitado em {{ s.data_solicitacao.strftime('%d/%m/%Y %H:%M') }}</div>
+            </div>
+            <div class="flex-row">
+                <form method="POST" style="display:inline;">
+                    <input type="hidden" name="membro_id" value="{{ s.id }}">
+                    <input type="hidden" name="acao" value="aprovar">
+                    <button type="submit" class="btn-sm">Aprovar</button>
+                </form>
+                <form method="POST" style="display:inline;">
+                    <input type="hidden" name="membro_id" value="{{ s.id }}">
+                    <input type="hidden" name="acao" value="rejeitar">
+                    <button type="submit" class="btn-sm btn-danger">Rejeitar</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">Nenhuma solicitação pendente.</div>
+        {% endfor %}
+    </div>
+
+    <!-- MEMBROS APROVADOS -->
+    <div class="section-title">Membros Aprovados</div>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Permissões da Equipe</span>
+        </div>
+        {% for m in membros_aprovados %}
+        <div class="list-item">
+            <div class="membro-info">
+                <span class="membro-nome">
+                    {{ m.usuario.username }}
+                    {% if m.pode_gerenciar_membros %}
+                        <span class="coroa" title="Gerente">⚡</span>
+                    {% endif %}
+                </span>
+                <div class="membro-data">Membro desde {{ m.data_solicitacao.strftime('%d/%m/%Y') }}</div>
+                
+                <form method="POST" class="permission-form">
+                    <input type="hidden" name="membro_id" value="{{ m.id }}">
+                    <input type="hidden" name="acao" value="atualizar_permissoes">
+                    <label class="permission-check">
+                        <input type="checkbox" name="pode_criar_produto" {% if m.pode_criar_produto %}checked{% endif %}> Criar produtos
+                    </label>
+                    <label class="permission-check">
+                        <input type="checkbox" name="pode_confirmar_pedido" {% if m.pode_confirmar_pedido %}checked{% endif %}> Confirmar pedidos
+                    </label>
+                    <label class="permission-check">
+                        <input type="checkbox" name="pode_gerenciar_membros" {% if m.pode_gerenciar_membros %}checked{% endif %}> Gerenciar membros
+                    </label>
+                    <div style="margin-top: 8px;">
+                        <button type="submit" class="btn-sm btn-outline">Salvar Permissões</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">Nenhum membro aprovado ainda.</div>
+        {% endfor %}
+    </div>
+
+    <a href="{{ url_for('dashboard') }}" class="back-link">← Voltar para o Painel</a>
+</div>
+
+</body>
+</html>
