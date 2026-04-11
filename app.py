@@ -614,8 +614,7 @@ def perfil(usuario_id):
 
     return render_template('perfil.html', usuario=usuario, barraca=barraca, is_self=is_self)
 
-# --- INICIALIZAÇÃO ---
-
+# --- INICIALIZAÇÃO (executada na importação do módulo) ---
 def criar_admin_master():
     admin = Usuario.query.filter_by(username="Arthur").first()
     if not admin:
@@ -628,8 +627,11 @@ def criar_admin_master():
         db.session.commit()
         print("✅ Admin Arthur criado!")
 
+# Garante que o banco de dados e o admin master sejam criados quando o módulo é importado
+with app.app_context():
+    db.create_all()
+    criar_admin_master()
+
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-        criar_admin_master()
+    # Para execução local (debug)
     app.run(debug=True, host="0.0.0.0", port=5000)
