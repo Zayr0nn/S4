@@ -1,11 +1,21 @@
 import os
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
+import sys
+import traceback
+
+# --- Cloudinary (opcional) ---
+try:
+    import cloudinary
+    import cloudinary.uploader
+    import cloudinary.api
+    CLOUDINARY_AVAILABLE = True
+except ImportError:
+    CLOUDINARY_AVAILABLE = False
+    print("Aviso: Cloudinary não está instalado. Upload de fotos desabilitado.", file=sys.stderr)
+
 from flask import Flask, render_template, request, redirect, url_for, flash, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from sqlalchemy import func
+from sqlalchemy import func, inspect
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
@@ -13,17 +23,18 @@ from datetime import datetime
 base_dir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'saleshub_2026_secure_key'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'saleshub_2026_secure_key_dev')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(base_dir, 'feira.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Configuração do Cloudinary (via variáveis de ambiente)
-cloudinary.config(
-    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
-    api_key=os.environ.get('CLOUDINARY_API_KEY'),
-    api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
-    secure=True
-)
+# Configuração do Cloudinary (se disponível)
+if CLOUDINARY_AVAILABLE:
+    cloudinary.config(
+        cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+        api_key=os.environ.get('CLOUDINARY_API_KEY'),
+        api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
+        secure=True
+    )
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -571,39 +582,32 @@ def perfil(usuario_id):
             flash("Você não tem permissão para alterar este perfil.", "erro")
             return redirect(url_for('perfil', usuario_id=usuario.id))
 
-        # Salva textos básicos
         usuario.serie = request.form.get('serie', usuario.serie)
         usuario.descricao = request.form.get('descricao', usuario.descricao)
 
-        # Upload da imagem para o Cloudinary
         if 'foto_perfil' in request.files:
             foto = request.files['foto_perfil']
             if foto.filename != '':
-                try:
-                    # Faz upload para o Cloudinary
-                    upload_result = cloudinary.uploader.upload(
-                        foto,
-                        folder="saleshub_perfis",
-                        public_id=f"user_{usuario.id}",
-                        overwrite=True,
-                        transformation={
-                            'width': 300,
-                            'height': 300,
-                            'crop': 'fill',
-                            'gravity': 'face'
-                        }
-                    )
-                    # Salva a URL segura da imagem no banco
-                    usuario.foto_perfil = upload_result['secure_url']
-                except Exception as e:
-                    flash(f"Erro ao enviar a foto: {str(e)}", "erro")
-                    return redirect(url_for('perfil', usuario_id=usuario.id))
+                if CLOUDINARY_AVAILABLE:
+                    try:
+                        upload_result = cloudinary.uploader.upload(
+                            foto,
+                            folder="saleshub_perfis",
+                            public_id=f"user_{usuario.id}",
+                            overwrite=True,
+                            transformation={'width': 300, 'height': 300, 'crop': 'fill', 'gravity': 'face'}
+                        )
+                        usuario.foto_perfil = upload_result['secure_url']
+                    except Exception as e:
+                        flash(f"Erro ao enviar a foto: {str(e)}", "erro")
+                        return redirect(url_for('perfil', usuario_id=usuario.id))
+                else:
+                    flash("Upload de fotos não configurado no servidor.", "erro")
 
         db.session.commit()
         flash("Perfil atualizado com sucesso!", "sucesso")
         return redirect(url_for('perfil', usuario_id=usuario.id))
 
-    # Determinar barraca associada (para exibição)
     barraca = None
     if usuario.tipo == 'vendedor':
         barraca = usuario
@@ -614,7 +618,21 @@ def perfil(usuario_id):
 
     return render_template('perfil.html', usuario=usuario, barraca=barraca, is_self=is_self)
 
-# --- INICIALIZAÇÃO (executada na importação do módulo) ---
+# --- ROTA DE SAÚDE PARA O RAILWAY ---
+@app.route('/health')
+def health():
+    return 'OK', 200
+
+# --- INICIALIZAÇÃO SEGURA DO BANCO DE DADOS ---
+def init_db():
+    with app.app_context():
+        inspector = inspect(db.engine)
+        if not inspector.has_table("usuario"):
+            db.create_all()
+            print("✅ Tabelas criadas com sucesso.", file=sys.stderr)
+        else:
+            print("ℹ️ Banco de dados já existe.", file=sys.stderr)
+
 def criar_admin_master():
     admin = Usuario.query.filter_by(username="Arthur").first()
     if not admin:
@@ -625,13 +643,17 @@ def criar_admin_master():
         )
         db.session.add(novo_admin)
         db.session.commit()
-        print("✅ Admin Arthur criado!")
+        print("✅ Admin Arthur criado!", file=sys.stderr)
 
-# Garante que o banco de dados e o admin master sejam criados quando o módulo é importado
-with app.app_context():
-    db.create_all()
-    criar_admin_master()
+try:
+    init_db()
+    with app.app_context():
+        criar_admin_master()
+except Exception as e:
+    print("❌ Erro ao inicializar banco de dados:", file=sys.stderr)
+    traceback.print_exc()
 
+# --- PONTO DE ENTRADA PARA DESENVOLVIMENTO LOCAL ---
 if __name__ == "__main__":
-    # Para execução local (debug)
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host="0.0.0.0", port=port)
