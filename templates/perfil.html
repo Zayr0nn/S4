@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Perfil de {{ usuario.username }} — SalesHub</title>
     <style>
-        /* Mantenha exatamente o mesmo CSS que você já tem, sem alterações */
+        /* Mantenha exatamente o mesmo CSS que você já tem */
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
@@ -359,8 +359,8 @@
     <div class="avatar-section">
         <div class="avatar-wrap" {% if is_self %}onclick="document.getElementById('fotoInput').click()"{% endif %}>
             {% if usuario.foto_perfil %}
-                <!-- Usa a imagem salva na pasta uploads -->
-                <img src="{{ url_for('static', filename='uploads/' + usuario.foto_perfil) }}" class="avatar-img" id="avatarPreviewBig" alt="foto">
+                <!-- Cloudinary URL (ou fallback local) -->
+                <img src="{{ usuario.foto_perfil }}" class="avatar-img" id="avatarPreviewBig" alt="foto">
             {% else %}
                 <!-- Fallback para ui-avatars -->
                 <img src="https://ui-avatars.com/api/?name={{ usuario.username }}&background=7c6ef7&color=fff&size=96" class="avatar-img" id="avatarPreviewBig" alt="avatar">
@@ -429,7 +429,7 @@
     <p class="section-title">Editar Perfil</p>
     <form method="POST" action="{{ url_for('perfil', usuario_id=usuario.id) }}" enctype="multipart/form-data">
 
-        <!-- FOTO DE PERFIL (agora com name="foto_perfil") -->
+        <!-- FOTO DE PERFIL -->
         <div class="form-card">
             <div class="form-section-header">Foto de Perfil</div>
             <div class="form-body">
