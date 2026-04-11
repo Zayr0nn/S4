@@ -645,22 +645,21 @@ def criar_admin_master():
         db.session.commit()
         app.logger.info("✅ Admin Arthur criado!")
 
-def init_db():
-    inspector = inspect(db.engine)
-    if not inspector.has_table("usuario"):
-        db.create_all()
-        app.logger.info("✅ Tabelas criadas.")
-    else:
-        app.logger.info("ℹ️ Banco já existe.")
+# Flag por worker — evita rodar mais de uma vez por processo Gunicorn
+_inicializado = False
 
-# Inicialização executada apenas uma vez no boot
-with app.app_context():
+@app.before_request
+def inicializar_uma_vez():
+    global _inicializado
+    if _inicializado:
+        return
+    _inicializado = True
     try:
-        init_db()
+        db.create_all()
         criar_admin_master()
-        app.logger.info("✅ App inicializado com sucesso.")
+        app.logger.info("✅ Worker inicializado com sucesso.")
     except Exception as e:
-        app.logger.error(f"❌ Erro na inicialização: {e}", exc_info=True)
+        app.logger.error(f"❌ Erro na inicialização do worker: {e}", exc_info=True)
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
