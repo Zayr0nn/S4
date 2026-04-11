@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename   ### NOVO: para upload seguro de arquivos
 from datetime import datetime
 
 # --- CONFIGURAÇÕES ---
@@ -13,6 +14,10 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'saleshub_2026_secure_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(base_dir, 'feira.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+### NOVO: Configuração da pasta de upload de fotos
+app.config['UPLOAD_FOLDER'] = os.path.join(base_dir, 'static', 'uploads')
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -549,12 +554,39 @@ def logout():
     logout_user()
     return redirect(url_for("index"))
 
-@app.route('/perfil/<int:usuario_id>')
+@app.route('/perfil/<int:usuario_id>', methods=['GET', 'POST'])
 @login_required
 def perfil(usuario_id):
     usuario = Usuario.query.get_or_404(usuario_id)
     is_self = current_user.is_authenticated and current_user.id == usuario.id
-    
+
+    if request.method == 'POST':
+        if not is_self and not current_user.is_admin:
+            flash("Você não tem permissão para alterar este perfil.", "erro")
+            return redirect(url_for('perfil', usuario_id=usuario.id))
+
+        # Salva textos básicos
+        usuario.serie = request.form.get('serie', usuario.serie)
+        usuario.descricao = request.form.get('descricao', usuario.descricao)
+
+        ### NOVO: Lógica para processar o arquivo de imagem
+        if 'foto_perfil' in request.files:
+            foto = request.files['foto_perfil']
+            if foto.filename != '':
+                # Gera nome de arquivo seguro
+                extensao = os.path.splitext(foto.filename)[1]
+                nome_arquivo = f"user_{usuario.id}{extensao}"
+                caminho = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
+
+                # Salva o arquivo fisicamente na pasta static/uploads
+                foto.save(caminho)
+                # Salva apenas o nome do arquivo no banco de dados
+                usuario.foto_perfil = nome_arquivo
+
+        db.session.commit()
+        flash("Perfil atualizado com sucesso!", "sucesso")
+        return redirect(url_for('perfil', usuario_id=usuario.id))
+
     # Determinar barraca associada (para exibição)
     barraca = None
     if usuario.tipo == 'vendedor':
