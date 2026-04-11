@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Perfil de {{ usuario.username }} — SalesHub</title>
+    <title>Perfil de {{ usuario.username | e }} — SalesHub</title>
     <style>
         /* Mantenha exatamente o mesmo CSS que você já tem */
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -357,19 +357,21 @@
 
     <!-- AVATAR + NOME -->
     <div class="avatar-section">
+        {# Somente permite clique se for o próprio usuário E o formulário de edição estiver presente #}
         <div class="avatar-wrap" {% if is_self %}onclick="document.getElementById('fotoInput').click()"{% endif %}>
-            {% if usuario.foto_perfil %}
+            {% if usuario.foto_perfil and usuario.foto_perfil|trim != '' %}
                 <!-- Cloudinary URL (ou fallback local) -->
                 <img src="{{ usuario.foto_perfil }}" class="avatar-img" id="avatarPreviewBig" alt="foto">
             {% else %}
-                <!-- Fallback para ui-avatars -->
-                <img src="https://ui-avatars.com/api/?name={{ usuario.username }}&background=7c6ef7&color=fff&size=96" class="avatar-img" id="avatarPreviewBig" alt="avatar">
+                <!-- Fallback para ui-avatars (com encoding seguro) -->
+                {% set nome_fallback = usuario.username | default('User') | urlencode %}
+                <img src="https://ui-avatars.com/api/?name={{ nome_fallback }}&background=7c6ef7&color=fff&size=96" class="avatar-img" id="avatarPreviewBig" alt="avatar">
             {% endif %}
             {% if is_self %}
             <div class="avatar-edit-btn">✎</div>
             {% endif %}
         </div>
-        <p class="avatar-name">{{ usuario.username }}</p>
+        <p class="avatar-name">{{ usuario.username | e }}</p>
         <div class="avatar-role">
             {% if usuario.is_admin %}
                 ★ Administrador
