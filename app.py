@@ -22,10 +22,14 @@ base_dir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'saleshub_2026_secure_key_dev')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-    'DATABASE_URL',
-    'sqlite:///' + os.path.join(base_dir, 'feira.db')
-)
+
+# --- CORREÇÃO DO DATABASE_URL APLICADA AQUI ---
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///' + os.path.join(base_dir, 'feira.db'))
+# Corrige prefixo incompatível do Railway / Render
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
@@ -626,7 +630,7 @@ def logout():
     logout_user()
     return redirect(url_for("index"))
 
-# --- HEALTH CHECK (Railway) ---
+# --- HEALTH CHECK ---
 
 @app.route('/health')
 def health():
@@ -645,7 +649,6 @@ def criar_admin_master():
         db.session.commit()
         app.logger.info("✅ Admin Arthur criado!")
 
-# Flag por worker — evita rodar mais de uma vez por processo Gunicorn
 _inicializado = False
 
 @app.before_request
@@ -657,9 +660,9 @@ def inicializar_uma_vez():
     try:
         db.create_all()
         criar_admin_master()
-        app.logger.info("✅ Worker inicializado com sucesso.")
+        app.logger.info("✅ Worker inicializado.")
     except Exception as e:
-        app.logger.error(f"❌ Erro na inicialização do worker: {e}", exc_info=True)
+        app.logger.error(f"❌ Erro: {e}", exc_info=True)
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
