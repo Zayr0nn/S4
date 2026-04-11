@@ -644,7 +644,6 @@ def criar_admin_master():
         db.session.add(novo_admin)
         db.session.commit()
         print("✅ Admin Arthur criado!", file=sys.stderr)
-
 try:
     init_db()
     with app.app_context():
@@ -652,7 +651,14 @@ try:
 except Exception as e:
     print("❌ Erro ao inicializar banco de dados:", file=sys.stderr)
     traceback.print_exc()
-
+    # --- AQUECIMENTO (WARMUP) PARA EVITAR TIMEOUT NO RAILWAY ---
+with app.app_context():
+    # Pré-carrega alguns dados ou simplesmente executa uma query simples
+    try:
+        Usuario.query.first()
+        print("✅ Warmup concluído.", file=sys.stderr)
+    except Exception as e:
+        print("⚠️ Warmup falhou, mas ignorado:", e, file=sys.stderr)
 # --- PONTO DE ENTRADA PARA DESENVOLVIMENTO LOCAL ---
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
