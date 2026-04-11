@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Perfil de {{ usuario.username }} — SalesHub</title>
+    <style>
+        /* Mantenha o mesmo CSS que você já tem, sem alterações */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #13131a;
+            --surface2: #1c1c26;
+            --border: rgba(255,255,255,0.07);
+            --border2: rgba(255,255,255,0.12);
+            --accent: #7c6ef7;
+            --green: #22c55e;
+            --green-dim: rgba(34,197,94,0.12);
+            --gold: #f59e0b;
+            --text: #f1f0ff;
+            --muted: #6e6a8a;
+            --muted2: #9e9bb8;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 12px; }
+
+        .logo-icon {
+            width: 34px; height: 34px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .logo-icon svg { width: 18px; height: 18px; }
+        .logo-text { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
+
+        .btn-back {
+            display: flex; align-items: center; gap: 6px;
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: 10px; padding: 7px 13px;
+            font-size: 13px; font-weight: 600; color: var(--muted2);
+            text-decoration: none; transition: color 0.15s;
+        }
+
+        .btn-back:hover { color: var(--text); }
+
+        .wrapper { max-width: 480px; margin: 0 auto; padding: 28px 20px 0; }
+
+        .flash-sucesso {
+            background: rgba(34,197,94,0.08);
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 14px; padding: 13px 16px;
+            font-size: 14px; color: var(--green);
+            margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+        }
+
+        .flash-erro {
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 14px; padding: 13px 16px;
+            font-size: 14px; color: var(--danger);
+            margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+        }
+
+        .flash-icon {
+            width: 22px; height: 22px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 800; flex-shrink: 0;
+        }
+
+        .flash-sucesso .flash-icon { background: rgba(34,197,94,0.15); color: var(--green); }
+        .flash-erro .flash-icon { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+        .avatar-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .avatar-wrap {
+            position: relative;
+            width: 96px; height: 96px;
+            margin-bottom: 14px;
+            cursor: default;
+        }
+
+        .avatar-img {
+            width: 96px; height: 96px;
+            border-radius: 28px;
+            object-fit: cover;
+            border: 2px solid var(--accent);
+        }
+
+        .avatar-placeholder {
+            width: 96px; height: 96px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, var(--accent), #5b4fd4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; font-weight: 800; color: #fff;
+            border: 2px solid var(--accent);
+        }
+
+        .avatar-edit-btn {
+            position: absolute;
+            bottom: -6px; right: -6px;
+            width: 30px; height: 30px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px;
+            border: 2px solid var(--bg);
+            cursor: pointer;
+        }
+
+        .avatar-name {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+
+        .avatar-role {
+            margin-top: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .info-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .info-header {
+            padding: 13px 18px;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px; font-weight: 700;
+            color: var(--muted); text-transform: uppercase;
+            letter-spacing: 1.5px; background: var(--surface2);
+        }
+
+        .info-row {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-row:last-child { border-bottom: none; }
+        .info-row-label { font-size: 13px; color: var(--muted2); }
+        .info-row-value { font-size: 14px; font-weight: 600; color: var(--text); text-align: right; }
+        .info-row-value.green { color: var(--green); }
+        .info-row-value.gold { color: var(--gold); }
+
+        .form-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .form-section-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            background: var(--surface2);
+        }
+
+        .form-body { padding: 18px; }
+
+        .field { margin-bottom: 14px; }
+        .field:last-child { margin-bottom: 0; }
+
+        .field-label {
+            font-size: 12px; font-weight: 600; color: var(--muted2);
+            margin-bottom: 7px; display: block; letter-spacing: 0.3px;
+        }
+
+        input[type="text"],
+        input[type="file"],
+        textarea,
+        select {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border2);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 15px;
+            padding: 12px 14px;
+            font-family: inherit;
+            transition: border-color 0.15s;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(124,110,247,0.04);
+        }
+
+        input::placeholder, textarea::placeholder { color: var(--muted); }
+        textarea { resize: none; height: 90px; line-height: 1.5; }
+
+        input[type="file"] {
+            padding: 10px 14px;
+            cursor: pointer;
+            color: var(--muted2);
+            font-size: 13px;
+        }
+
+        input[type="file"]::-webkit-file-upload-button {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        select option { background: #1c1c26; color: var(--text); }
+
+        .foto-preview-wrap {
+            display: none;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .foto-preview {
+            width: 70px; height: 70px;
+            border-radius: 16px;
+            object-fit: cover;
+            border: 2px solid var(--accent);
+        }
+
+        .btn-submit {
+            width: 100%; height: 54px;
+            background: var(--accent); color: #fff;
+            border: none; border-radius: 14px;
+            font-size: 16px; font-weight: 800;
+            cursor: pointer; letter-spacing: -0.2px;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+
+        .btn-submit:active { transform: scale(0.97); opacity: 0.9; }
+
+        .danger-card {
+            background: rgba(239,68,68,0.04);
+            border: 1px solid rgba(239,68,68,0.15);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .danger-header {
+            padding: 13px 18px;
+            border-bottom: 1px solid rgba(239,68,68,0.1);
+            font-size: 11px; font-weight: 700;
+            color: var(--danger); text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .danger-body { padding: 16px 18px; }
+
+        .btn-logout-full {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; height: 48px;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 12px;
+            color: var(--danger);
+            font-size: 14px; font-weight: 700;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+
+        .btn-logout-full:hover { background: rgba(239,68,68,0.15); }
+
+        .section-title {
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-left">
+        <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+        </div>
+        <span class="logo-text">SalesHub</span>
+    </div>
+    <a href="{{ url_for('index') }}" class="btn-back">← Início</a>
+</div>
+
+<div class="wrapper">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          {% if category == 'sucesso' %}
+            <div class="flash-sucesso">
+              <div class="flash-icon">✓</div>{{ message }}
+            </div>
+          {% else %}
+            <div class="flash-erro">
+              <div class="flash-icon">✕</div>{{ message }}
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- AVATAR + NOME -->
+    <div class="avatar-section">
+        <div class="avatar-wrap" {% if is_self %}onclick="document.getElementById('fotoInput').click()"{% endif %}>
+            {% if usuario.foto_perfil %}
+                <img src="{{ usuario.foto_perfil }}" class="avatar-img" id="avatarPreviewBig" alt="foto">
+            {% else %}
+                <div class="avatar-placeholder" id="avatarPlaceholder">
+                    {{ usuario.username[0].upper() }}
+                </div>
+                <img src="" class="avatar-img" id="avatarPreviewBig" style="display:none;" alt="foto">
+            {% endif %}
+            {% if is_self %}
+            <div class="avatar-edit-btn">✎</div>
+            {% endif %}
+        </div>
+        <p class="avatar-name">{{ usuario.username }}</p>
+        <div class="avatar-role">
+            {% if usuario.is_admin %}
+                ★ Administrador
+            {% elif usuario.tipo == 'vendedor' %}
+                🏪 Líder de Barraca
+            {% else %}
+                🛒 Comprador
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- INFORMAÇÕES PÚBLICAS (visíveis a todos) -->
+    {% if usuario.tipo == 'vendedor' %}
+    <p class="section-title">Dados da Barraca</p>
+    <div class="info-card">
+        <div class="info-header">Informações</div>
+        <div class="info-row">
+            <span class="info-row-label">Barraca</span>
+            <span class="info-row-value">{{ usuario.nome_barraca or '—' }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-row-label">Turma</span>
+            <span class="info-row-value">{{ usuario.turma or '—' }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-row-label">Professor</span>
+            <span class="info-row-value">{{ usuario.professor_responsavel or '—' }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-row-label">Chave PIX</span>
+            <span class="info-row-value green">{{ usuario.pix or '—' }}</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- DETALHES ADICIONAIS (série, descrição) -->
+    {% if usuario.serie or usuario.descricao %}
+    <p class="section-title">Sobre</p>
+    <div class="info-card">
+        {% if usuario.serie %}
+        <div class="info-row">
+            <span class="info-row-label">Série</span>
+            <span class="info-row-value">{{ usuario.serie }}</span>
+        </div>
+        {% endif %}
+        {% if usuario.descricao %}
+        <div class="info-row">
+            <span class="info-row-label">Descrição</span>
+            <span class="info-row-value">{{ usuario.descricao }}</span>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- SE FOR O PRÓPRIO USUÁRIO, MOSTRAR FORMULÁRIO DE EDIÇÃO -->
+    {% if is_self %}
+    <p class="section-title">Editar Perfil</p>
+    <form method="POST" enctype="multipart/form-data">
+
+        <!-- FOTO -->
+        <div class="form-card">
+            <div class="form-section-header">Foto de Perfil</div>
+            <div class="form-body">
+                <div class="field">
+                    <label class="field-label">Escolher imagem</label>
+                    <input type="file" name="foto" id="fotoInput" accept="image/*" onchange="previewFoto(event)">
+                </div>
+                <div class="foto-preview-wrap" id="fotoPreviewWrap">
+                    <img src="" id="fotoPreviewSmall" class="foto-preview" alt="preview">
+                </div>
+            </div>
+        </div>
+
+        {% if usuario.tipo == 'vendedor' %}
+        <div class="form-card">
+            <div class="form-section-header">Informações do Vendedor</div>
+            <div class="form-body">
+                <div class="field">
+                    <label class="field-label">Série que está cursando</label>
+                    <input type="text" name="serie" placeholder="ex: 3º Ano do Ensino Médio"
+                           value="{{ usuario.serie or '' }}">
+                </div>
+                <div class="field">
+                    <label class="field-label">Sobre a barraca / descrição</label>
+                    <textarea name="descricao"
+                              placeholder="Conte um pouco sobre o que sua barraca oferece...">{{ usuario.descricao or '' }}</textarea>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="form-card">
+            <div class="form-section-header">Sobre Você</div>
+            <div class="form-body">
+                <div class="field">
+                    <label class="field-label">Série que está cursando</label>
+                    <input type="text" name="serie" placeholder="ex: 2º Ano do Ensino Médio"
+                           value="{{ usuario.serie or '' }}">
+                </div>
+                <div class="field">
+                    <label class="field-label">Bio / Descrição pessoal</label>
+                    <textarea name="descricao"
+                              placeholder="Escreva algo sobre você...">{{ usuario.descricao or '' }}</textarea>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn-submit">Salvar Alterações →</button>
+    </form>
+
+    <!-- DANGER ZONE (apenas para o próprio usuário) -->
+    <div style="margin-top: 24px;">
+        <p class="section-title">Sessão</p>
+        <div class="danger-card">
+            <div class="danger-header">Zona de Atenção</div>
+            <div class="danger-body">
+                <a href="{{ url_for('logout') }}" class="btn-logout-full">Encerrar Sessão</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+    function previewFoto(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const src = e.target.result;
+
+            const bigImg = document.getElementById('avatarPreviewBig');
+            const placeholder = document.getElementById('avatarPlaceholder');
+            if (bigImg) {
+                bigImg.src = src;
+                bigImg.style.display = 'block';
+            }
+            if (placeholder) placeholder.style.display = 'none';
+
+            const smallImg = document.getElementById('fotoPreviewSmall');
+            const wrap = document.getElementById('fotoPreviewWrap');
+            if (smallImg && wrap) {
+                smallImg.src = src;
+                wrap.style.display = 'block';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+</script>
+
+</body>
+</html>
