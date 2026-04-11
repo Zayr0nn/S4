@@ -1,10 +1,12 @@
 import os
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 from flask import Flask, render_template, request, redirect, url_for, flash, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename   ### NOVO: para upload seguro de arquivos
 from datetime import datetime
 
 # --- CONFIGURAÇÕES ---
@@ -15,9 +17,13 @@ app.config['SECRET_KEY'] = 'saleshub_2026_secure_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(base_dir, 'feira.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-### NOVO: Configuração da pasta de upload de fotos
-app.config['UPLOAD_FOLDER'] = os.path.join(base_dir, 'static', 'uploads')
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+# Configuração do Cloudinary (via variáveis de ambiente)
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
+    secure=True
+)
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -39,8 +45,8 @@ class Usuario(UserMixin, db.Model):
     professor_responsavel = db.Column(db.String(50), nullable=True)
     ip_registro = db.Column(db.String(50), nullable=True)
     dispositivo = db.Column(db.String(255), nullable=True)
-    # Novos campos para perfil
-    foto_perfil = db.Column(db.String(255), nullable=True)
+    # Campos de perfil
+    foto_perfil = db.Column(db.Text, nullable=True)  # URL do Cloudinary
     serie = db.Column(db.String(50), nullable=True)
     descricao = db.Column(db.Text, nullable=True)
 
@@ -569,19 +575,29 @@ def perfil(usuario_id):
         usuario.serie = request.form.get('serie', usuario.serie)
         usuario.descricao = request.form.get('descricao', usuario.descricao)
 
-        ### NOVO: Lógica para processar o arquivo de imagem
+        # Upload da imagem para o Cloudinary
         if 'foto_perfil' in request.files:
             foto = request.files['foto_perfil']
             if foto.filename != '':
-                # Gera nome de arquivo seguro
-                extensao = os.path.splitext(foto.filename)[1]
-                nome_arquivo = f"user_{usuario.id}{extensao}"
-                caminho = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo)
-
-                # Salva o arquivo fisicamente na pasta static/uploads
-                foto.save(caminho)
-                # Salva apenas o nome do arquivo no banco de dados
-                usuario.foto_perfil = nome_arquivo
+                try:
+                    # Faz upload para o Cloudinary
+                    upload_result = cloudinary.uploader.upload(
+                        foto,
+                        folder="saleshub_perfis",
+                        public_id=f"user_{usuario.id}",
+                        overwrite=True,
+                        transformation={
+                            'width': 300,
+                            'height': 300,
+                            'crop': 'fill',
+                            'gravity': 'face'
+                        }
+                    )
+                    # Salva a URL segura da imagem no banco
+                    usuario.foto_perfil = upload_result['secure_url']
+                except Exception as e:
+                    flash(f"Erro ao enviar a foto: {str(e)}", "erro")
+                    return redirect(url_for('perfil', usuario_id=usuario.id))
 
         db.session.commit()
         flash("Perfil atualizado com sucesso!", "sucesso")
