@@ -546,12 +546,12 @@ def confirmar_pedido(id):
     return redirect(url_for('dashboard'))
 
 # --- MEMBROS ---
-@app.route("/gerenciar_barraca", methods=["GET", "POST"])
+@app.route('/gerenciar_barraca', methods=['GET', 'POST'])
 @login_required
 def gerenciar_barraca():
     if current_user.tipo != 'vendedor' and not usuario_pode_gerenciar_membros(current_user.id):
-    flash('Acesso negado.', 'danger')
-    return redirect(url_for('index'))
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('index'))
 
     if request.method == "POST":
         acao = request.form.get("acao")
