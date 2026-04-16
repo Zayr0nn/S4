@@ -646,11 +646,11 @@ def gerenciar_barraca():
                            membros=membros)
 @app.route("/gerenciar_membros", methods=["GET", "POST"])
 @login_required
-def gerenciar_membros():
-    if current_user.tipo != 'vendedor' and not usuario_pode_gerenciar_membros(current_user.id):
+def gerenciar_membros(): 
+   if current_user.tipo != 'vendedor' and not usuario_pode_gerenciar_membros(current_user.id):
     flash('Acesso negado.', 'danger')
     return redirect(url_for('index'))
-
+    
     barraca_id = current_user.id
     if request.method == "POST":
         acao = request.form.get("acao")
