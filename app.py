@@ -1,27 +1,25 @@
+```python
 import os
 import sys
 import base64
 import logging
 import json
 import io
-
 try:
     import cloudinary
     import cloudinary.uploader
     CLOUDINARY_AVAILABLE = True
 except ImportError:
     CLOUDINARY_AVAILABLE = False
-
 from flask import Flask, render_template, request, redirect, url_for, flash, abort, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from sqlalchemy import func, inspect
+from sqlalchemy import func, text
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
 # --- CONFIGURAÇÕES ---
 base_dir = os.path.abspath(os.path.dirname(__file__))
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'saleshub_2026_secure_key_dev')
 
@@ -31,16 +29,13 @@ database_url = os.environ.get('DATABASE_URL', 'sqlite:///' + os.path.join(base_d
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 
 # --- CLOUDINARY: só ativa se TODAS as variáveis estiverem presentes ---
 CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME')
 CLOUD_KEY = os.environ.get('CLOUDINARY_API_KEY')
 CLOUD_SECRET = os.environ.get('CLOUDINARY_API_SECRET')
-
 if CLOUDINARY_AVAILABLE and CLOUD_NAME and CLOUD_KEY and CLOUD_SECRET:
     cloudinary.config(
         cloud_name=CLOUD_NAME,
@@ -56,11 +51,9 @@ else:
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-
 PROFESSORES_AUTORIZADOS = ["Brenda", "Winaiara"]
 
 # --- MODELOS ---
-
 class Usuario(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -76,11 +69,11 @@ class Usuario(UserMixin, db.Model):
     foto_perfil = db.Column(db.Text, nullable=True)
     serie = db.Column(db.String(50), nullable=True)
     descricao = db.Column(db.Text, nullable=True)
-    foto_estande = db.Column(db.Text, nullable=True)      # foto da frente do estande
-    foto_qrcode_pix = db.Column(db.Text, nullable=True)  # QR code do PIX
-    custo_operacional = db.Column(db.Float, default=0.0)  # custo declarado (para análise de lucro depois)
-    is_premium = db.Column(db.Boolean, default=False)     # para módulo 2 depois
-    is_destaque = db.Column(db.Boolean, default=False)    # para tráfego pago depois
+    foto_estande = db.Column(db.Text, nullable=True)
+    foto_qrcode_pix = db.Column(db.Text, nullable=True)
+    custo_operacional = db.Column(db.Float, default=0.0)
+    is_premium = db.Column(db.Boolean, default=False)
+    is_destaque = db.Column(db.Boolean, default=False)
     produtos = db.relationship('Produto', backref='dono', lazy=True, cascade="all, delete-orphan")
     pedidos_recebidos = db.relationship('Pedido', backref='vendedor', foreign_keys='Pedido.vendedor_id', lazy=True)
     associacoes = db.relationship('MembroBarraca', backref='usuario', lazy=True, foreign_keys='MembroBarraca.usuario_id')
@@ -115,7 +108,6 @@ class Avaliacao(db.Model):
     data_hora = db.Column(db.DateTime, default=db.func.current_timestamp())
     autor_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     barraca_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
-
     autor = db.relationship('Usuario', foreign_keys=[autor_id], backref='avaliacoes_feitas')
     barraca = db.relationship('Usuario', foreign_keys=[barraca_id], backref='avaliacoes_recebidas')
 
@@ -128,7 +120,6 @@ class MembroBarraca(db.Model):
     pode_criar_produto = db.Column(db.Boolean, default=False)
     pode_confirmar_pedido = db.Column(db.Boolean, default=False)
     pode_gerenciar_membros = db.Column(db.Boolean, default=False)
-
     barraca = db.relationship('Usuario', foreign_keys=[barraca_id], backref='membros_associados')
 
 @login_manager.user_loader
@@ -136,7 +127,6 @@ def load_user(user_id):
     return Usuario.query.get(int(user_id))
 
 # --- PERMISSÕES ---
-
 def usuario_pode_criar_produto(usuario, barraca_id):
     if usuario.id == barraca_id:
         return True
@@ -156,19 +146,14 @@ def usuario_pode_gerenciar_membros(usuario, barraca_id):
     return membro and membro.pode_gerenciar_membros
 
 # --- PERFIL ---
-# Rota /perfil → perfil do próprio usuário logado
-# Rota /perfil/<id> → perfil de qualquer usuário (somente leitura se não for o dono)
-
 @app.route("/perfil", methods=["GET", "POST"])
 @app.route("/perfil/<int:usuario_id>", methods=["GET", "POST"])
 @login_required
 def perfil(usuario_id=None):
-    # Se não passou ID, usa o usuário logado
     if usuario_id is None:
         usuario = current_user
     else:
         usuario = Usuario.query.get_or_404(usuario_id)
-
     is_self = current_user.id == usuario.id
 
     if request.method == "POST":
@@ -188,10 +173,7 @@ def perfil(usuario_id=None):
                         folder="saleshub_perfis",
                         public_id=f"user_{usuario.id}",
                         overwrite=True,
-                        transformation={
-                            'width': 300, 'height': 300,
-                            'crop': 'fill', 'gravity': 'face'
-                        }
+                        transformation={'width': 300, 'height': 300, 'crop': 'fill', 'gravity': 'face'}
                     )
                     usuario.foto_perfil = resultado['secure_url']
                 except Exception as e:
@@ -199,10 +181,9 @@ def perfil(usuario_id=None):
                     flash("Erro ao enviar foto. Tente novamente.", "erro")
                     return redirect(url_for('perfil'))
             else:
-                # Fallback: salva em base64 no banco
                 try:
                     dados = base64.b64encode(foto.read()).decode('utf-8')
-                    usuario.foto_perfil = f"data:{foto.mimetype};base64,{dados}"
+                    usuario.foto_perfil = f"{foto.mimetype};base64,{dados}"
                 except Exception as e:
                     app.logger.error(f"Erro base64: {e}")
                     flash("Erro ao processar foto.", "erro")
@@ -223,7 +204,6 @@ def perfil(usuario_id=None):
     return render_template('perfil.html', usuario=usuario, barraca=barraca, is_self=is_self)
 
 # --- PRODUTOS ---
-
 @app.route("/meus_produtos", methods=["GET", "POST"])
 @login_required
 def meus_produtos():
@@ -237,7 +217,7 @@ def meus_produtos():
             return redirect(url_for('index'))
         barraca_id = associacao.barraca_id
         tem_permissao = associacao.pode_criar_produto
-
+    
     if not tem_permissao:
         flash("Você não tem permissão para gerenciar produtos.", "erro")
         return redirect(url_for('dashboard'))
@@ -272,14 +252,13 @@ def deletar_produto(id):
     return redirect(url_for('meus_produtos'))
 
 # --- ADMINISTRAÇÃO ---
-
 @app.route('/admin')
 @login_required
 def admin_panel():
     if not current_user.is_admin:
         flash("Acesso restrito aos administradores.", "erro")
         return redirect(url_for('login'))
-
+    
     total_usuarios = Usuario.query.count()
     soma_vendas = db.session.query(func.sum(Pedido.valor_total)).filter(Pedido.status == 'Confirmado').scalar() or 0
 
@@ -353,18 +332,15 @@ def remover_membro(membro_id):
     db.session.commit()
     flash("Associação removida.", "sucesso")
     return redirect(url_for('admin_panel'))
+
 @app.route('/admin/reset-database', methods=['POST'])
 @login_required
 def reset_database():
     if not current_user.is_admin: abort(403)
-    
     try:
-        # Desabilita constraint checks temporariamente
         if 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI']:
-            from sqlalchemy import text
             db.session.execute(text("SET CONSTRAINTS ALL DEFERRED"))
         
-        # Deleta na ordem inversa de dependências
         db.session.query(ItemPedido).delete()
         db.session.query(Pedido).delete()
         db.session.query(Avaliacao).delete()
@@ -373,7 +349,6 @@ def reset_database():
         db.session.query(Usuario).delete()
         db.session.commit()
         
-        # Recria as tabelas
         db.create_all()
         criar_admin_master()
         
@@ -382,11 +357,10 @@ def reset_database():
         db.session.rollback()
         app.logger.error(f"Erro ao resetar banco: {e}")
         flash(f"Erro ao resetar banco: {str(e)}", "erro")
-    
+
     return redirect(url_for('admin_panel'))
 
 # --- ROTAS PRINCIPAIS ---
-
 @app.route("/")
 def index():
     ranking = db.session.query(
@@ -396,7 +370,7 @@ def index():
         func.sum(Pedido.valor_total).label('total')
     ).join(Pedido, Usuario.id == Pedido.vendedor_id).filter(Pedido.status == 'Confirmado')\
      .group_by(Usuario.id).order_by(func.sum(Pedido.valor_total).desc()).limit(5).all()
-
+    
     barracas = Usuario.query.filter_by(tipo='vendedor').all()
     membros_por_barraca = {}
     for b in barracas:
@@ -422,7 +396,6 @@ def index():
 def ver_barraca(usuario_id):
     barraca = Usuario.query.get_or_404(usuario_id)
     produtos = Produto.query.filter_by(usuario_id=usuario_id).all()
-
     avaliacoes = Avaliacao.query.filter_by(barraca_id=usuario_id).order_by(Avaliacao.data_hora.desc()).all()
     media_nota = db.session.query(func.avg(Avaliacao.nota)).filter_by(barraca_id=usuario_id).scalar()
     media_nota = round(media_nota, 1) if media_nota else None
@@ -443,12 +416,12 @@ def ver_barraca(usuario_id):
                 return redirect(url_for('ver_barraca', usuario_id=usuario_id))
 
             if Avaliacao.query.filter_by(autor_id=current_user.id, barraca_id=usuario_id).first():
-                flash("Você já avaliou esta barraca.", "erro")
-                return redirect(url_for('ver_barraca', usuario_id=usuario_id))
+                 flash("Você já avaliou esta barraca.", "erro")
+                 return redirect(url_for('ver_barraca', usuario_id=usuario_id))
 
             comentario = request.form.get('comentario', '').strip()
             db.session.add(Avaliacao(
-                nota=nota_int,
+                 nota=nota_int,
                 comentario=comentario or None,
                 autor_id=current_user.id,
                 barraca_id=barraca.id
@@ -512,7 +485,7 @@ def dashboard():
             return redirect(url_for('index'))
         barraca_id = associacao.barraca_id
         is_lider = False
-
+    
     barraca = Usuario.query.get(barraca_id)
     pendentes = Pedido.query.filter_by(vendedor_id=barraca_id, status='Pendente').order_by(Pedido.data_hora.desc()).all()
     for p in pendentes:
@@ -549,7 +522,8 @@ def confirmar_pedido(id):
 @app.route('/gerenciar_barraca', methods=['GET', 'POST'])
 @login_required
 def gerenciar_barraca():
-    if current_user.tipo != 'vendedor' and not usuario_pode_gerenciar_membros(current_user.id):
+    # CORREÇÃO DO ERRO REPORTADO: Indentação corrigida aqui
+    if current_user.tipo != 'vendedor' and not usuario_pode_gerenciar_membros(current_user, current_user.id):
         flash('Acesso negado.', 'danger')
         return redirect(url_for('index'))
 
@@ -610,7 +584,7 @@ def gerenciar_barraca():
                         return redirect(url_for('gerenciar_barraca'))
                 else:
                     dados = base64.b64encode(foto.read()).decode('utf-8')
-                    current_user.foto_qrcode_pix = f"data:{foto.mimetype};base64,{dados}"
+                    current_user.foto_qrcode_pix = f"{foto.mimetype};base64,{dados}"
                 db.session.commit()
                 flash("QR Code do PIX atualizado!", "sucesso")
             else:
@@ -633,7 +607,7 @@ def gerenciar_barraca():
     total_ganho = db.session.query(func.sum(Pedido.valor_total)).filter_by(
         vendedor_id=current_user.id, status='Confirmado').scalar() or 0
     total_produtos = Produto.query.filter_by(usuario_id=current_user.id).count()
-    membros_aprovados = MembroBarraca.query.filter_by(barraca_id=current_user.id, status='aprovado').count()
+    membros_aprovados_count = MembroBarraca.query.filter_by(barraca_id=current_user.id, status='aprovado').count()
     solicitacoes_pendentes = MembroBarraca.query.filter_by(barraca_id=current_user.id, status='pendente').all()
     membros = MembroBarraca.query.filter_by(barraca_id=current_user.id, status='aprovado').all()
 
@@ -641,15 +615,16 @@ def gerenciar_barraca():
                            total_pedidos=total_pedidos,
                            total_ganho=total_ganho,
                            total_produtos=total_produtos,
-                           membros_aprovados=membros_aprovados,
+                           membros_aprovados=membros_aprovados_count,
                            solicitacoes=solicitacoes_pendentes,
                            membros=membros)
+
 @app.route("/gerenciar_membros", methods=["GET", "POST"])
 @login_required
-def gerenciar_membros(): 
-   if current_user.tipo != 'vendedor' and not usuario_pode_gerenciar_membros(current_user.id):
-    flash('Acesso negado.', 'danger')
-    return redirect(url_for('index'))
+def gerenciar_membros():
+    if current_user.tipo != 'vendedor' and not usuario_pode_gerenciar_membros(current_user, current_user.id):
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('index'))
     
     barraca_id = current_user.id
     if request.method == "POST":
@@ -679,7 +654,6 @@ def gerenciar_membros():
                            membros_aprovados=MembroBarraca.query.filter_by(barraca_id=barraca_id, status='aprovado').all())
 
 # --- AUTENTICAÇÃO ---
-
 @app.route("/cadastro", methods=["GET", "POST"])
 def cadastro():
     barracas_disponiveis = Usuario.query.filter_by(tipo='vendedor').all()
@@ -688,7 +662,7 @@ def cadastro():
         if Usuario.query.filter_by(username=username).first():
             flash("Este nome de usuário já existe.", "erro")
             return redirect(url_for("cadastro"))
-
+        
         senha_hash = generate_password_hash(request.form.get("senha"))
         tipo = request.form.get("tipo")
         papel = request.form.get("papel")
@@ -755,13 +729,11 @@ def logout():
     return redirect(url_for("index"))
 
 # --- BACKUP ---
-
 @app.route('/admin/criar_backup', methods=['POST'])
 @login_required
 def criar_backup():
     if not current_user.is_admin:
         abort(403)
-
     dados = {
         'backup_em': datetime.utcnow().isoformat(),
         'usuarios': [
@@ -817,7 +789,6 @@ def criar_backup():
 def restaurar_backup():
     if not current_user.is_admin:
         abort(403)
-
     arquivo = request.files.get('arquivo_backup')
     if not arquivo or not arquivo.filename:
         flash("Nenhum arquivo selecionado.", "erro")
@@ -833,7 +804,6 @@ def restaurar_backup():
         flash("Erro ao ler o arquivo JSON.", "erro")
         return redirect(url_for('admin_panel'))
 
-    # Confirmação explícita via form
     confirmacao = request.form.get('confirmar_restauracao')
     if confirmacao != 'RESTAURAR':
         flash("Confirme a restauração marcando a caixa de confirmação.", "erro")
@@ -848,7 +818,6 @@ def restaurar_backup():
         db.session.query(Usuario).delete()
         db.session.commit()
 
-        # Mapeia IDs antigos → novos IDs
         id_map = {}
         for u_data in conteudo.get('usuarios', []):
             novo = Usuario(
@@ -863,7 +832,7 @@ def restaurar_backup():
             db.session.add(novo)
             id_map[u_data['id']] = novo.id
 
-        db.session.commit()
+        db.session.commit() 
 
         for p_data in conteudo.get('produtos', []):
             db.session.add(Produto(
@@ -884,7 +853,7 @@ def restaurar_backup():
 
         for a_data in conteudo.get('avaliacoes', []):
             db.session.add(Avaliacao(
-                nota=a_data['nota'], comentario=a_data.get('comentario'),
+                 nota=a_data['nota'], comentario=a_data.get('comentario'),
                 autor_id=id_map.get(a_data['autor_id'], a_data['autor_id']),
                 barraca_id=id_map.get(a_data['barraca_id'], a_data['barraca_id'])
             ))
@@ -899,7 +868,7 @@ def restaurar_backup():
             db.session.flush()
             for it_data in ped_data.get('itens', []):
                 db.session.add(ItemPedido(
-                    pedido_id=novo_pedido.id,
+                     pedido_id=novo_pedido.id,
                     produto_nome=it_data['produto_nome'],
                     quantidade=it_data['quantidade'],
                     preco_unitario=it_data['preco_unitario']
@@ -916,13 +885,11 @@ def restaurar_backup():
     return redirect(url_for('admin_panel'))
 
 # --- HEALTH CHECK ---
-
 @app.route('/health')
 def health():
     return 'OK', 200
 
 # --- INICIALIZAÇÃO ---
-
 def criar_admin_master():
     if not Usuario.query.filter_by(username="Arthur").first():
         db.session.add(Usuario(
@@ -952,3 +919,4 @@ def inicializar_uma_vez():
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, host="0.0.0.0", port=port)
+```
