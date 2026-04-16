@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minha Barraca — SalesHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #13131a;
+            --surface2: #1c1c26;
+            --border: rgba(255,255,255,0.07);
+            --border2: rgba(255,255,255,0.12);
+            --accent: #7c6ef7;
+            --accent-dim: rgba(124,110,247,0.12);
+            --green: #22c55e;
+            --green-dim: rgba(34,197,94,0.12);
+            --gold: #f59e0b;
+            --gold-dim: rgba(245,158,11,0.10);
+            --danger: #ef4444;
+            --danger-dim: rgba(239,68,68,0.08);
+            --text: #f1f0ff;
+            --muted: #6e6a8a;
+            --muted2: #9e9bb8;
+        }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 12px; }
+
+        .logo-icon {
+            width: 34px; height: 34px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 16px;
+        }
+
+        .logo-text { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+
+        .btn-back {
+            display: flex; align-items: center; gap: 6px;
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: 10px; padding: 7px 13px;
+            font-size: 13px; font-weight: 600; color: var(--muted2);
+            text-decoration: none; transition: color 0.15s;
+        }
+        .btn-back:hover { color: var(--text); }
+
+        /* ── WRAPPER ── */
+        .wrapper { max-width: 560px; margin: 0 auto; padding: 24px 20px 0; }
+
+        /* ── FLASH ── */
+        .flash-sucesso {
+            background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 14px; padding: 13px 16px; font-size: 14px; color: var(--green);
+            margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+        }
+        .flash-erro {
+            background: var(--danger-dim); border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 14px; padding: 13px 16px; font-size: 14px; color: var(--danger);
+            margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+        }
+        .flash-icon {
+            width: 22px; height: 22px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 800; flex-shrink: 0;
+        }
+        .flash-sucesso .flash-icon { background: rgba(34,197,94,0.15); color: var(--green); }
+        .flash-erro .flash-icon { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+        /* ── HERO DA BARRACA ── */
+        .barraca-hero {
+            background: var(--accent);
+            border-radius: 22px;
+            padding: 22px 20px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .barraca-hero::before {
+            content: '';
+            position: absolute; top: -40px; right: -40px;
+            width: 130px; height: 130px;
+            background: rgba(255,255,255,0.07); border-radius: 50%;
+        }
+
+        .barraca-hero-label {
+            font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.55);
+            text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px;
+        }
+        .barraca-hero-name {
+            font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.3px;
+            margin-bottom: 14px;
+        }
+
+        .stats-mini {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .stat-mini {
+            background: rgba(255,255,255,0.12);
+            border-radius: 10px;
+            padding: 10px 8px;
+            text-align: center;
+        }
+
+        .stat-mini-value { font-size: 18px; font-weight: 800; color: #fff; }
+        .stat-mini-label { font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+        /* ── TABS ── */
+        .tabs-nav {
+            display: flex;
+            gap: 4px;
+            background: var(--surface2);
+            border-radius: 14px;
+            padding: 4px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: var(--muted2);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .tab-btn.active {
+            background: var(--surface);
+            color: var(--text);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── CARDS DE FORMULÁRIO ── */
+        .form-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .form-card-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-card-header-icon {
+            width: 30px; height: 30px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+        }
+
+        .form-card-title { font-size: 13px; font-weight: 700; color: var(--text); }
+        .form-card-sub { font-size: 11px; color: var(--muted2); margin-top: 1px; }
+
+        .form-body { padding: 18px; }
+
+        .field { margin-bottom: 14px; }
+        .field:last-child { margin-bottom: 0; }
+
+        .field-label {
+            font-size: 12px; font-weight: 600; color: var(--muted2);
+            margin-bottom: 7px; display: block; letter-spacing: 0.3px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="file"],
+        textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border2);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 15px;
+            padding: 12px 14px;
+            font-family: inherit;
+            transition: border-color 0.15s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(124,110,247,0.04);
+        }
+
+        input::placeholder, textarea::placeholder { color: var(--muted); }
+        textarea { resize: none; height: 80px; line-height: 1.5; }
+
+        input[type="file"] {
+            padding: 10px 14px;
+            cursor: pointer;
+            color: var(--muted2);
+            font-size: 13px;
+        }
+
+        input[type="file"]::-webkit-file-upload-button {
+            background: var(--accent);
+            color: #fff; border: none; border-radius: 8px;
+            padding: 6px 12px; font-size: 12px; font-weight: 700;
+            cursor: pointer; margin-right: 10px;
+        }
+
+        /* ── FOTO PREVIEW ── */
+        .foto-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .foto-preview-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: var(--surface2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .foto-preview-wrap.qr {
+            aspect-ratio: 1/1;
+            max-height: 240px;
+        }
+
+        .foto-preview-img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+
+        .foto-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted);
+            font-size: 13px;
+            padding: 30px;
+        }
+
+        .foto-empty i { font-size: 32px; color: var(--muted); }
+
+        .foto-actions {
+            padding: 14px 18px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .btn-upload {
+            flex: 1;
+            display: flex; align-items: center; justify-content: center;
+            gap: 7px;
+            height: 42px;
+            background: var(--accent-dim);
+            border: 1px solid rgba(124,110,247,0.25);
+            border-radius: 10px;
+            color: var(--accent);
+            font-size: 13px; font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-upload:hover { background: rgba(124,110,247,0.2); }
+
+        .btn-upload input[type="file"] {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            padding: 0;
+            border: none;
+            background: transparent;
+        }
+
+        .btn-remover {
+            height: 42px;
+            padding: 0 14px;
+            background: var(--danger-dim);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 10px;
+            color: var(--danger);
+            font-size: 13px; font-weight: 700;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 6px;
+            transition: background 0.15s;
+        }
+
+        .btn-remover:hover { background: rgba(239,68,68,0.15); }
+
+        /* ── BOTÃO SALVAR ── */
+        .btn-submit {
+            width: 100%; height: 50px;
+            background: var(--accent); color: #fff;
+            border: none; border-radius: 14px;
+            font-size: 15px; font-weight: 800;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+        .btn-submit:active { transform: scale(0.97); opacity: 0.9; }
+
+        /* ── MEMBROS ── */
+        .membro-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .membro-avatar {
+            width: 42px; height: 42px;
+            border-radius: 12px;
+            background: var(--accent-dim);
+            border: 1px solid rgba(124,110,247,0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 800; color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .membro-info { flex: 1; min-width: 0; }
+        .membro-nome { font-size: 15px; font-weight: 700; color: var(--text); }
+        .membro-status { font-size: 12px; color: var(--muted2); margin-top: 2px; }
+
+        .permissoes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .perm-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted2);
+            transition: all 0.15s;
+        }
+
+        .perm-toggle input[type="checkbox"] {
+            width: 16px; height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+            flex-shrink: 0;
+            padding: 0;
+            background: transparent;
+            border: none;
+        }
+
+        .perm-toggle:has(input:checked) {
+            background: var(--accent-dim);
+            border-color: rgba(124,110,247,0.3);
+            color: var(--accent);
+        }
+
+        .btn-aprovar {
+            background: var(--green-dim);
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 10px;
+            color: var(--green);
+            font-size: 13px; font-weight: 700;
+            padding: 8px 14px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-aprovar:hover { background: rgba(34,197,94,0.2); }
+
+        .btn-rejeitar {
+            background: var(--danger-dim);
+            border: 1px solid rgba(239,68,68,0.15);
+            border-radius: 10px;
+            color: var(--danger);
+            font-size: 13px; font-weight: 700;
+            padding: 8px 14px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-rejeitar:hover { background: rgba(239,68,68,0.15); }
+
+        .btn-salvar-perm {
+            width: 100%;
+            height: 40px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px; font-weight: 700;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        /* ── NOTIFICAÇÃO BADGE ── */
+        .badge-notif {
+            background: var(--danger);
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 4px;
+        }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            text-align: center;
+            padding: 32px 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .empty-state i { font-size: 28px; display: block; margin-bottom: 10px; }
+
+        /* ── SEÇÃO TITLE ── */
+        .section-title {
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 400px) {
+            .stats-mini { grid-template-columns: repeat(2, 1fr); }
+            .permissoes-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="header-left">
+        <div class="logo-icon"><i class="fa-solid fa-store"></i></div>
+        <span class="logo-text">Minha Barraca</span>
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="btn-back">← Painel</a>
+</div>
+
+<div class="wrapper">
+
+    <!-- FLASH -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          {% if category == 'sucesso' %}
+            <div class="flash-sucesso">
+              <div class="flash-icon">✓</div>{{ message }}
+            </div>
+          {% else %}
+            <div class="flash-erro">
+              <div class="flash-icon">✕</div>{{ message }}
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- HERO -->
+    <div class="barraca-hero">
+        <p class="barraca-hero-label">Gestão do Estande</p>
+        <h1 class="barraca-hero-name">{{ current_user.nome_barraca }}</h1>
+        <div class="stats-mini">
+            <div class="stat-mini">
+                <div class="stat-mini-value">{{ total_pedidos }}</div>
+                <div class="stat-mini-label">Vendas</div>
+            </div>
+            <div class="stat-mini">
+                <div class="stat-mini-value">R${{ "%.0f"|format(total_ganho) }}</div>
+                <div class="stat-mini-label">Receita</div>
+            </div>
+            <div class="stat-mini">
+                <div class="stat-mini-value">{{ total_produtos }}</div>
+                <div class="stat-mini-label">Produtos</div>
+            </div>
+            <div class="stat-mini">
+                <div class="stat-mini-value">{{ membros_aprovados }}</div>
+                <div class="stat-mini-label">Membros</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab('info', this)">
+            <i class="fa-solid fa-circle-info"></i> Informações
+        </button>
+        <button class="tab-btn" onclick="switchTab('fotos', this)">
+            <i class="fa-solid fa-images"></i> Fotos
+        </button>
+        <button class="tab-btn" onclick="switchTab('pix', this)">
+            <i class="fa-solid fa-qrcode"></i> PIX
+        </button>
+        <button class="tab-btn" onclick="switchTab('membros', this)">
+            <i class="fa-solid fa-users"></i> Membros
+            {% if solicitacoes|length > 0 %}
+            <span class="badge-notif">{{ solicitacoes|length }}</span>
+            {% endif %}
+        </button>
+    </div>
+
+    <!-- ── TAB: INFORMAÇÕES ── -->
+    <div id="tab-info" class="tab-content active">
+        <form method="POST">
+            <input type="hidden" name="acao" value="info">
+            <div class="form-card">
+                <div class="form-card-header">
+                    <div class="form-card-header-icon" style="background:var(--accent-dim);color:var(--accent);">
+                        <i class="fa-solid fa-store"></i>
+                    </div>
+                    <div>
+                        <div class="form-card-title">Dados da Barraca</div>
+                        <div class="form-card-sub">Informações públicas exibidas para os clientes</div>
+                    </div>
+                </div>
+                <div class="form-body">
+                    <div class="field">
+                        <label class="field-label">Nome da Barraca</label>
+                        <input type="text" name="nome_barraca"
+                               value="{{ current_user.nome_barraca or '' }}"
+                               placeholder="ex: Lanche do Zé">
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Descrição / Slogan</label>
+                        <textarea name="descricao"
+                                  placeholder="Conte o que sua barraca oferece de especial...">{{ current_user.descricao or '' }}</textarea>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Chave PIX</label>
+                        <input type="text" name="pix"
+                               value="{{ current_user.pix or '' }}"
+                   
