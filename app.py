@@ -349,16 +349,16 @@ def remover_membro(membro_id):
     db.session.commit()
     flash("Associação removida.", "sucesso")
     return redirect(url_for('admin_panel'))
-
 @app.route('/admin/reset-database', methods=['POST'])
 @login_required
 def reset_database():
     if not current_user.is_admin: abort(403)
     
     try:
-        # Desabilita constraint checks temporariamente (para PostgreSQL)
+        # Desabilita constraint checks temporariamente
         if 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI']:
-            db.session.execute("SET CONSTRAINTS ALL DEFERRED")
+            from sqlalchemy import text
+            db.session.execute(text("SET CONSTRAINTS ALL DEFERRED"))
         
         # Deleta na ordem inversa de dependências
         db.session.query(ItemPedido).delete()
