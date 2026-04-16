@@ -362,7 +362,9 @@
             {% endif %}
         </h2>
         <p class="profile-meta">{{ barraca.turma }} &nbsp;·&nbsp; Prof. {{ barraca.professor_responsavel }}</p>
-        <a href="{{ url_for('gerenciar_barraca') }}" class="back-link" style="display:inline-block; margin-top:8px;">Minha Barraca</a>
+        {% if is_lider %}
+<a href="{{ url_for('gerenciar_barraca') }}" class="btn-sm" style="margin-top:8px; display:inline-block;">Gerenciar Barraca</a>
+{% endif %}
     </div>
 </div>
 
@@ -375,7 +377,7 @@
             <p class="metric-value green">R$&nbsp;{{ "%.2f"|format(total) }}</p>
         </div>
         <div class="metric-card">
-            <p class="metric-label">Ticket Médio</p>
+            <p class="metric-label">Total de Vendas</p>
             <p class="metric-value">R$&nbsp;{{ "%.2f"|format(media) }}</p>
         </div>
     </div>
