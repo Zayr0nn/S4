@@ -78,6 +78,49 @@
         .icon-users { background: var(--accent-dim); color: var(--accent); }
         .icon-sales { background: var(--green-dim); color: var(--green); }
 
+        /* ── BACKUP BUTTON ── */
+        .backup-zone {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .btn-backup {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .btn-backup:hover { opacity: 0.85; transform: scale(0.98); }
+
+        .restore-zone {
+            background: rgba(34, 197, 94, 0.05);
+            border: 1px dashed var(--green);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .btn-restore {
+            background: var(--green);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        .btn-restore:hover { opacity: 0.8; transform: scale(0.98); }
+
         /* ── EMERGENCY BUTTON ── */
         .danger-zone {
             background: rgba(239, 68, 68, 0.05);
@@ -233,6 +276,22 @@
             </div>
         </div>
 
+        <div class="backup-zone">
+            <p style="font-size: 11px; color: var(--muted); margin-bottom: 10px; font-weight: 700; text-transform: uppercase;">Backup de Dados</p>
+            <form action="{{ url_for('criar_backup') }}" method="POST">
+                <button type="submit" class="btn-backup">
+                    <i class="fa-solid fa-download me-1"></i> Baixar Backup Completo
+                </button>
+            </form>
+        </div>
+
+        <div class="restore-zone">
+            <p style="font-size: 11px; color: var(--muted); margin-bottom: 10px; font-weight: 700; text-transform: uppercase;">Restaurar Backup</p>
+            <button type="button" onclick="openRestoreModal()" class="btn-restore">
+                <i class="fa-solid fa-upload me-1"></i> Restaurar Backup
+            </button>
+        </div>
+
         <div class="danger-zone">
             <p style="font-size: 11px; color: var(--muted); margin-bottom: 10px; font-weight: 700; text-transform: uppercase;">Controle de Instância</p>
             <form action="{{ url_for('reset_database') }}" method="POST" onsubmit="return confirm('ATENÇÃO: Isso apagará TODOS os dados do sistema!')">
@@ -351,6 +410,25 @@
         </div>
     </div>
 
+    <div id="restoreModal" class="modal-overlay">
+        <div class="modal-content">
+            <h4>Restaurar Backup</h4>
+            <form action="{{ url_for('restaurar_backup') }}" method="POST" enctype="multipart/form-data">
+                <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Selecione o arquivo JSON de backup:</p>
+                <input type="file" name="arquivo_backup" accept=".json" class="modal-input" required>
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--danger); margin-bottom: 15px; cursor: pointer;">
+                    <input type="checkbox" id="confirmRestore" style="width: 16px; height: 16px; accent-color: var(--danger);">
+                    Confirmo que isso substituirá TODOS os dados atuais
+                </label>
+                <input type="hidden" name="confirmar_restauracao" id="confirmValue" value="">
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" onclick="closeRestoreModal()" style="flex:1; background:none; border:none; color:var(--muted); cursor:pointer; font-weight:700;">Cancelar</button>
+                    <button type="submit" class="btn-confirm" id="btnRestoreSubmit" disabled>Restaurar Dados</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         function switchTab(tab) {
             document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
@@ -368,6 +446,22 @@
         function closeModal() {
             document.getElementById('pwdModal').style.display = 'none';
         }
+
+        function openRestoreModal() {
+            document.getElementById('confirmRestore').checked = false;
+            document.getElementById('confirmValue').value = '';
+            document.getElementById('btnRestoreSubmit').disabled = true;
+            document.getElementById('restoreModal').style.display = 'flex';
+        }
+
+        function closeRestoreModal() {
+            document.getElementById('restoreModal').style.display = 'none';
+        }
+
+        document.getElementById('confirmRestore').addEventListener('change', function() {
+            document.getElementById('confirmValue').value = this.checked ? 'RESTAURAR' : '';
+            document.getElementById('btnRestoreSubmit').disabled = !this.checked;
+        });
 
         // Gráfico
         const ctx = document.getElementById('vendasChart').getContext('2d');
