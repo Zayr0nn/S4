@@ -354,10 +354,31 @@ def remover_membro(membro_id):
 @login_required
 def reset_database():
     if not current_user.is_admin: abort(403)
-    db.drop_all()
-    db.create_all()
-    criar_admin_master()
-    flash("Banco de Dados Resetado com Sucesso!", "sucesso")
+    
+    try:
+        # Desabilita constraint checks temporariamente (para PostgreSQL)
+        if 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI']:
+            db.session.execute("SET CONSTRAINTS ALL DEFERRED")
+        
+        # Deleta na ordem inversa de dependências
+        db.session.query(ItemPedido).delete()
+        db.session.query(Pedido).delete()
+        db.session.query(Avaliacao).delete()
+        db.session.query(MembroBarraca).delete()
+        db.session.query(Produto).delete()
+        db.session.query(Usuario).delete()
+        db.session.commit()
+        
+        # Recria as tabelas
+        db.create_all()
+        criar_admin_master()
+        
+        flash("Banco de Dados Resetado com Sucesso!", "sucesso")
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Erro ao resetar banco: {e}")
+        flash(f"Erro ao resetar banco: {str(e)}", "erro")
+    
     return redirect(url_for('admin_panel'))
 
 # --- ROTAS PRINCIPAIS ---
