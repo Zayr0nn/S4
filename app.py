@@ -2,6 +2,8 @@ import os
 import sys
 import base64
 import logging
+import json
+import io
 
 try:
     import cloudinary
@@ -10,7 +12,7 @@ try:
 except ImportError:
     CLOUDINARY_AVAILABLE = False
 
-from flask import Flask, render_template, request, redirect, url_for, flash, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, abort, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from sqlalchemy import func, inspect
@@ -629,6 +631,167 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for("index"))
+
+# --- BACKUP ---
+
+@app.route('/admin/criar_backup', methods=['POST'])
+@login_required
+def criar_backup():
+    if not current_user.is_admin:
+        abort(403)
+
+    dados = {
+        'backup_em': datetime.utcnow().isoformat(),
+        'usuarios': [
+            {
+                'id': u.id, 'username': u.username, 'senha': u.senha,
+                'tipo': u.tipo, 'is_admin': u.is_admin,
+                'nome_barraca': u.nome_barraca, 'pix': u.pix,
+                'turma': u.turma, 'professor_responsavel': u.professor_responsavel,
+                'ip_registro': u.ip_registro, 'dispositivo': u.dispositivo,
+                'foto_perfil': u.foto_perfil, 'serie': u.serie, 'descricao': u.descricao
+            } for u in Usuario.query.all()
+        ],
+        'produtos': [
+            {'id': p.id, 'nome': p.nome, 'preco': p.preco,
+             'descricao': p.descricao, 'usuario_id': p.usuario_id}
+            for p in Produto.query.all()
+        ],
+        'pedidos': [
+            {
+                'id': ped.id, 'valor_total': ped.valor_total,
+                'status': ped.status, 'data_hora': ped.data_hora.isoformat() if ped.data_hora else None,
+                'cliente_id': ped.cliente_id, 'vendedor_id': ped.vendedor_id,
+                'itens': [
+                    {'produto_nome': it.produto_nome, 'quantidade': it.quantidade,
+                     'preco_unitario': it.preco_unitario}
+                    for it in ped.itens
+                ]
+            } for ped in Pedido.query.all()
+        ],
+        'avaliacoes': [
+            {'id': a.id, 'nota': a.nota, 'comentario': a.comentario,
+             'data_hora': a.data_hora.isoformat() if a.data_hora else None,
+             'autor_id': a.autor_id, 'barraca_id': a.barraca_id}
+            for a in Avaliacao.query.all()
+        ],
+        'membros_barraca': [
+            {
+                'id': m.id, 'usuario_id': m.usuario_id, 'barraca_id': m.barraca_id,
+                'status': m.status, 'data_solicitacao': m.data_solicitacao.isoformat() if m.data_solicitacao else None,
+                'pode_criar_produto': m.pode_criar_produto,
+                'pode_confirmar_pedido': m.pode_confirmar_pedido,
+                'pode_gerenciar_membros': m.pode_gerenciar_membros
+            } for m in MembroBarraca.query.all()
+        ]
+    }
+
+    arquivo = io.BytesIO(json.dumps(dados, ensure_ascii=False, indent=2).encode('utf-8'))
+    nome = f"backup_saleshub_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    return send_file(arquivo, download_name=nome, as_attachment=True, mimetype='application/json')
+
+@app.route('/admin/restaurar_backup', methods=['POST'])
+@login_required
+def restaurar_backup():
+    if not current_user.is_admin:
+        abort(403)
+
+    arquivo = request.files.get('arquivo_backup')
+    if not arquivo or not arquivo.filename:
+        flash("Nenhum arquivo selecionado.", "erro")
+        return redirect(url_for('admin_panel'))
+
+    if not arquivo.filename.endswith('.json'):
+        flash("O arquivo deve ser um .json válido.", "erro")
+        return redirect(url_for('admin_panel'))
+
+    try:
+        conteudo = json.loads(arquivo.read().decode('utf-8'))
+    except Exception:
+        flash("Erro ao ler o arquivo JSON.", "erro")
+        return redirect(url_for('admin_panel'))
+
+    # Confirmação explícita via form
+    confirmacao = request.form.get('confirmar_restauracao')
+    if confirmacao != 'RESTAURAR':
+        flash("Confirme a restauração marcando a caixa de confirmação.", "erro")
+        return redirect(url_for('admin_panel'))
+
+    try:
+        db.session.query(ItemPedido).delete()
+        db.session.query(Pedido).delete()
+        db.session.query(Avaliacao).delete()
+        db.session.query(MembroBarraca).delete()
+        db.session.query(Produto).delete()
+        db.session.query(Usuario).delete()
+        db.session.commit()
+
+        # Mapeia IDs antigos → novos IDs
+        id_map = {}
+        for u_data in conteudo.get('usuarios', []):
+            novo = Usuario(
+                id=u_data['id'], username=u_data['username'], senha=u_data['senha'],
+                tipo=u_data['tipo'], is_admin=u_data['is_admin'],
+                nome_barraca=u_data.get('nome_barraca'), pix=u_data.get('pix'),
+                turma=u_data.get('turma'), professor_responsavel=u_data.get('professor_responsavel'),
+                ip_registro=u_data.get('ip_registro'), dispositivo=u_data.get('dispositivo'),
+                foto_perfil=u_data.get('foto_perfil'), serie=u_data.get('serie'),
+                descricao=u_data.get('descricao')
+            )
+            db.session.add(novo)
+            id_map[u_data['id']] = novo.id
+
+        db.session.commit()
+
+        for p_data in conteudo.get('produtos', []):
+            db.session.add(Produto(
+                nome=p_data['nome'], preco=p_data['preco'],
+                descricao=p_data.get('descricao'),
+                usuario_id=id_map.get(p_data['usuario_id'], p_data['usuario_id'])
+            ))
+
+        for m_data in conteudo.get('membros_barraca', []):
+            db.session.add(MembroBarraca(
+                usuario_id=id_map.get(m_data['usuario_id'], m_data['usuario_id']),
+                barraca_id=id_map.get(m_data['barraca_id'], m_data['barraca_id']),
+                status=m_data['status'],
+                pode_criar_produto=m_data.get('pode_criar_produto', False),
+                pode_confirmar_pedido=m_data.get('pode_confirmar_pedido', False),
+                pode_gerenciar_membros=m_data.get('pode_gerenciar_membros', False)
+            ))
+
+        for a_data in conteudo.get('avaliacoes', []):
+            db.session.add(Avaliacao(
+                nota=a_data['nota'], comentario=a_data.get('comentario'),
+                autor_id=id_map.get(a_data['autor_id'], a_data['autor_id']),
+                barraca_id=id_map.get(a_data['barraca_id'], a_data['barraca_id'])
+            ))
+
+        for ped_data in conteudo.get('pedidos', []):
+            novo_pedido = Pedido(
+                valor_total=ped_data['valor_total'], status=ped_data['status'],
+                cliente_id=id_map.get(ped_data['cliente_id'], ped_data['cliente_id']),
+                vendedor_id=id_map.get(ped_data['vendedor_id'], ped_data['vendedor_id'])
+            )
+            db.session.add(novo_pedido)
+            db.session.flush()
+            for it_data in ped_data.get('itens', []):
+                db.session.add(ItemPedido(
+                    pedido_id=novo_pedido.id,
+                    produto_nome=it_data['produto_nome'],
+                    quantidade=it_data['quantidade'],
+                    preco_unitario=it_data['preco_unitario']
+                ))
+
+        db.session.commit()
+        flash(f"Backup restaurado com sucesso! {len(conteudo.get('usuarios', []))} usuários recuperados.", "sucesso")
+
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Erro na restauração: {e}")
+        flash(f"Erro ao restaurar backup: {str(e)}", "erro")
+
+    return redirect(url_for('admin_panel'))
 
 # --- HEALTH CHECK ---
 
