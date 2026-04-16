@@ -549,9 +549,9 @@ def confirmar_pedido(id):
 @app.route("/gerenciar_barraca", methods=["GET", "POST"])
 @login_required
 def gerenciar_barraca():
-    if current_user.tipo != 'vendedor':
-        flash("Apenas líderes de barraca podem acessar esta página.", "erro")
-        return redirect(url_for('index'))
+    if current_user.tipo != 'vendedor' and not usuario_pode_gerenciar_membros(current_user.id):
+    flash('Acesso negado.', 'danger')
+    return redirect(url_for('index'))
 
     if request.method == "POST":
         acao = request.form.get("acao")
@@ -647,9 +647,9 @@ def gerenciar_barraca():
 @app.route("/gerenciar_membros", methods=["GET", "POST"])
 @login_required
 def gerenciar_membros():
-    if current_user.tipo != 'vendedor':
-        flash("Apenas líderes de barraca podem gerenciar membros.", "erro")
-        return redirect(url_for('index'))
+    if current_user.tipo != 'vendedor' and not usuario_pode_gerenciar_membros(current_user.id):
+    flash('Acesso negado.', 'danger')
+    return redirect(url_for('index'))
 
     barraca_id = current_user.id
     if request.method == "POST":
