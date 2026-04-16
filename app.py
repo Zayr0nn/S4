@@ -76,7 +76,11 @@ class Usuario(UserMixin, db.Model):
     foto_perfil = db.Column(db.Text, nullable=True)
     serie = db.Column(db.String(50), nullable=True)
     descricao = db.Column(db.Text, nullable=True)
-
+    foto_estande = db.Column(db.Text, nullable=True)      # foto da frente do estande
+    foto_qrcode_pix = db.Column(db.Text, nullable=True)  # QR code do PIX
+    custo_operacional = db.Column(db.Float, default=0.0)  # custo declarado (para análise de lucro depois)
+    is_premium = db.Column(db.Boolean, default=False)     # para módulo 2 depois
+    is_destaque = db.Column(db.Boolean, default=False)    # para tráfego pago depois
     produtos = db.relationship('Produto', backref='dono', lazy=True, cascade="all, delete-orphan")
     pedidos_recebidos = db.relationship('Pedido', backref='vendedor', foreign_keys='Pedido.vendedor_id', lazy=True)
     associacoes = db.relationship('MembroBarraca', backref='usuario', lazy=True, foreign_keys='MembroBarraca.usuario_id')
@@ -542,7 +546,104 @@ def confirmar_pedido(id):
     return redirect(url_for('dashboard'))
 
 # --- MEMBROS ---
+@app.route("/gerenciar_barraca", methods=["GET", "POST"])
+@login_required
+def gerenciar_barraca():
+    if current_user.tipo != 'vendedor':
+        flash("Apenas líderes de barraca podem acessar esta página.", "erro")
+        return redirect(url_for('index'))
 
+    if request.method == "POST":
+        acao = request.form.get("acao")
+
+        if acao == "info":
+            current_user.nome_barraca = request.form.get("nome_barraca", "").strip() or current_user.nome_barraca
+            current_user.pix = request.form.get("pix", "").strip() or current_user.pix
+            current_user.descricao = request.form.get("descricao", "").strip() or None
+            try:
+                custo = float(request.form.get("custo_operacional", 0) or 0)
+                current_user.custo_operacional = custo
+            except ValueError:
+                pass
+            db.session.commit()
+            flash("Informações da barraca atualizadas!", "sucesso")
+
+        elif acao == "foto_estande":
+            foto = request.files.get("foto_estande")
+            if foto and foto.filename:
+                if CLOUDINARY_AVAILABLE:
+                    try:
+                        resultado = cloudinary.uploader.upload(
+                            foto,
+                            folder="saleshub_estandes",
+                            public_id=f"estande_{current_user.id}",
+                            overwrite=True,
+                            transformation={'width': 800, 'height': 600, 'crop': 'fill'}
+                        )
+                        current_user.foto_estande = resultado['secure_url']
+                    except Exception as e:
+                        flash(f"Erro ao enviar foto: {e}", "erro")
+                        return redirect(url_for('gerenciar_barraca'))
+                else:
+                    dados = base64.b64encode(foto.read()).decode('utf-8')
+                    current_user.foto_estande = f"data:{foto.mimetype};base64,{dados}"
+                db.session.commit()
+                flash("Foto do estande atualizada!", "sucesso")
+            else:
+                flash("Selecione uma imagem.", "erro")
+
+        elif acao == "foto_qrcode":
+            foto = request.files.get("foto_qrcode")
+            if foto and foto.filename:
+                if CLOUDINARY_AVAILABLE:
+                    try:
+                        resultado = cloudinary.uploader.upload(
+                            foto,
+                            folder="saleshub_qrcodes",
+                            public_id=f"qrcode_{current_user.id}",
+                            overwrite=True,
+                            transformation={'width': 400, 'height': 400, 'crop': 'fill'}
+                        )
+                        current_user.foto_qrcode_pix = resultado['secure_url']
+                    except Exception as e:
+                        flash(f"Erro ao enviar QR code: {e}", "erro")
+                        return redirect(url_for('gerenciar_barraca'))
+                else:
+                    dados = base64.b64encode(foto.read()).decode('utf-8')
+                    current_user.foto_qrcode_pix = f"data:{foto.mimetype};base64,{dados}"
+                db.session.commit()
+                flash("QR Code do PIX atualizado!", "sucesso")
+            else:
+                flash("Selecione uma imagem.", "erro")
+
+        elif acao == "remover_foto_estande":
+            current_user.foto_estande = None
+            db.session.commit()
+            flash("Foto do estande removida.", "sucesso")
+
+        elif acao == "remover_qrcode":
+            current_user.foto_qrcode_pix = None
+            db.session.commit()
+            flash("QR Code removido.", "sucesso")
+
+        return redirect(url_for('gerenciar_barraca'))
+
+    # Estatísticas rápidas para exibir
+    total_pedidos = Pedido.query.filter_by(vendedor_id=current_user.id, status='Confirmado').count()
+    total_ganho = db.session.query(func.sum(Pedido.valor_total)).filter_by(
+        vendedor_id=current_user.id, status='Confirmado').scalar() or 0
+    total_produtos = Produto.query.filter_by(usuario_id=current_user.id).count()
+    membros_aprovados = MembroBarraca.query.filter_by(barraca_id=current_user.id, status='aprovado').count()
+    solicitacoes_pendentes = MembroBarraca.query.filter_by(barraca_id=current_user.id, status='pendente').all()
+    membros = MembroBarraca.query.filter_by(barraca_id=current_user.id, status='aprovado').all()
+
+    return render_template("gerenciar_barraca.html",
+                           total_pedidos=total_pedidos,
+                           total_ganho=total_ganho,
+                           total_produtos=total_produtos,
+                           membros_aprovados=membros_aprovados,
+                           solicitacoes=solicitacoes_pendentes,
+                           membros=membros)
 @app.route("/gerenciar_membros", methods=["GET", "POST"])
 @login_required
 def gerenciar_membros():
