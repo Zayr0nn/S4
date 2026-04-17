@@ -1,41 +1,54 @@
-```python
 import os
 import sys
 import base64
 import logging
 import json
 import io
+from datetime import datetime
+
 try:
     import cloudinary
     import cloudinary.uploader
     CLOUDINARY_AVAILABLE = True
 except ImportError:
     CLOUDINARY_AVAILABLE = False
+
 from flask import Flask, render_template, request, redirect, url_for, flash, abort, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from sqlalchemy import func, text
+from sqlalchemy import func, inspect, text
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
 
-# --- CONFIGURAÇÕES ---
+# =============================================================================
+# DICA DE DESIGN: Para deixar o botão "Gerenciar Barraca" mais vistoso no 
+# Dashboard, adicione classes Bootstrap ou Tailwind ao seu HTML (dashboard.html):
+#
+# EXEMPLO BOOTSTRAP: 
+# <a href="{{ url_for('gerenciar_barraca') }}" class="btn btn-primary btn-lg px-4 py-2 shadow-lg fw-bold">
+#     🛠️ Gerenciar Barraca
+# </a>
+#
+# EXEMPLO TAILWIND:
+# <a href="{{ url_for('gerenciar_barraca') }}" class="inline-flex items-center px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all">
+#     🛠️ Gerenciar Barraca
+# </a>
+# =============================================================================
+
 base_dir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'saleshub_2026_secure_key_dev')
 
-# --- CORREÇÃO DO DATABASE_URL APLICADA AQUI ---
 database_url = os.environ.get('DATABASE_URL', 'sqlite:///' + os.path.join(base_dir, 'feira.db'))
-# Corrige prefixo incompatível do Railway / Render
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 
-# --- CLOUDINARY: só ativa se TODAS as variáveis estiverem presentes ---
 CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME')
 CLOUD_KEY = os.environ.get('CLOUDINARY_API_KEY')
 CLOUD_SECRET = os.environ.get('CLOUDINARY_API_SECRET')
+
 if CLOUDINARY_AVAILABLE and CLOUD_NAME and CLOUD_KEY and CLOUD_SECRET:
     cloudinary.config(
         cloud_name=CLOUD_NAME,
@@ -126,7 +139,7 @@ class MembroBarraca(db.Model):
 def load_user(user_id):
     return Usuario.query.get(int(user_id))
 
-# --- PERMISSÕES ---
+# --- PERMISSÕES CORRIGIDAS ---
 def usuario_pode_criar_produto(usuario, barraca_id):
     if usuario.id == barraca_id:
         return True
@@ -169,10 +182,7 @@ def perfil(usuario_id=None):
             if CLOUDINARY_AVAILABLE:
                 try:
                     resultado = cloudinary.uploader.upload(
-                        foto,
-                        folder="saleshub_perfis",
-                        public_id=f"user_{usuario.id}",
-                        overwrite=True,
+                        foto, folder="saleshub_perfis", public_id=f"user_{usuario.id}", overwrite=True,
                         transformation={'width': 300, 'height': 300, 'crop': 'fill', 'gravity': 'face'}
                     )
                     usuario.foto_perfil = resultado['secure_url']
@@ -190,7 +200,7 @@ def perfil(usuario_id=None):
                     return redirect(url_for('perfil'))
 
         db.session.commit()
-        flash("Perfil atualizado com sucesso!", "sucesso")
+        flash("Perfil atualizado com sucesso!", "success")
         return redirect(url_for('perfil'))
 
     barraca = None
@@ -230,10 +240,9 @@ def meus_produtos():
             novo_p = Produto(nome=nome, preco=float(preco), descricao=descricao, usuario_id=barraca_id)
             db.session.add(novo_p)
             db.session.commit()
-            flash("Produto adicionado com sucesso!", "sucesso")
+            flash("Produto adicionado com sucesso!", "success")
             return redirect(url_for('meus_produtos'))
-        else:
-            flash("Nome e preço são obrigatórios.", "erro")
+        flash("Nome e preço são obrigatórios.", "erro")
 
     produtos = Produto.query.filter_by(usuario_id=barraca_id).all()
     return render_template("meus_produtos.html", produtos=produtos)
@@ -246,7 +255,7 @@ def deletar_produto(id):
     if current_user.id == barraca_id or current_user.is_admin or usuario_pode_criar_produto(current_user, barraca_id):
         db.session.delete(produto)
         db.session.commit()
-        flash("Produto removido!", "sucesso")
+        flash("Produto removido!", "success")
     else:
         flash("Acesso negado.", "erro")
     return redirect(url_for('meus_produtos'))
@@ -261,28 +270,19 @@ def admin_panel():
     
     total_usuarios = Usuario.query.count()
     soma_vendas = db.session.query(func.sum(Pedido.valor_total)).filter(Pedido.status == 'Confirmado').scalar() or 0
-
     vendas_por_barraca = db.session.query(
-        Usuario.nome_barraca,
-        func.sum(Pedido.valor_total).label('total')
+        Usuario.nome_barraca, func.sum(Pedido.valor_total).label('total')
     ).join(Pedido, Usuario.id == Pedido.vendedor_id).filter(Pedido.status == 'Confirmado')\
      .group_by(Usuario.id).order_by(func.sum(Pedido.valor_total).desc()).limit(5).all()
 
     todos_usuarios = Usuario.query.all()
     todos_pedidos = Pedido.query.order_by(Pedido.data_hora.desc()).all()
-
     barracas_lideres = Usuario.query.filter_by(tipo='vendedor').all()
-    membros_por_barraca = {}
-    for barraca in barracas_lideres:
-        membros_por_barraca[barraca.id] = MembroBarraca.query.filter_by(barraca_id=barraca.id).all()
+    membros_por_barraca = {b.id: MembroBarraca.query.filter_by(barraca_id=b.id).all() for b in barracas_lideres}
 
-    return render_template('admin.html',
-                           total_usuarios=total_usuarios,
-                           soma_vendas=soma_vendas,
-                           vendas_por_barraca=vendas_por_barraca,
-                           todos_usuarios=todos_usuarios,
-                           todos_pedidos=todos_pedidos,
-                           barracas_lideres=barracas_lideres,
+    return render_template('admin.html', total_usuarios=total_usuarios, soma_vendas=soma_vendas,
+                           vendas_por_barraca=vendas_por_barraca, todos_usuarios=todos_usuarios,
+                           todos_pedidos=todos_pedidos, barracas_lideres=barracas_lideres,
                            membros_por_barraca=membros_por_barraca)
 
 @app.route('/admin/toggle_admin/<int:id>')
@@ -295,7 +295,7 @@ def toggle_admin(id):
     else:
         u.is_admin = not u.is_admin
         db.session.commit()
-        flash(f"Usuário {u.username} foi {'promovido' if u.is_admin else 'rebaixado'}!", "sucesso")
+        flash(f"Usuário {u.username} foi {'promovido' if u.is_admin else 'rebaixado'}!", "success")
     return redirect(url_for('admin_panel'))
 
 @app.route('/admin/reset_password/<int:id>', methods=['POST'])
@@ -307,7 +307,7 @@ def reset_password(id):
     if nova_senha:
         u.senha = generate_password_hash(nova_senha)
         db.session.commit()
-        flash(f"Senha de {u.username} alterada com sucesso!", "sucesso")
+        flash(f"Senha de {u.username} alterada com sucesso!", "success")
     return redirect(url_for('admin_panel'))
 
 @app.route('/admin/delete_user/<int:id>')
@@ -320,7 +320,7 @@ def delete_user(id):
     else:
         db.session.delete(u)
         db.session.commit()
-        flash(f"Usuário {u.username} excluído permanentemente.", "sucesso")
+        flash(f"Usuário {u.username} excluído permanentemente.", "success")
     return redirect(url_for('admin_panel'))
 
 @app.route('/admin/remover_membro/<int:membro_id>')
@@ -330,7 +330,7 @@ def remover_membro(membro_id):
     membro = MembroBarraca.query.get_or_404(membro_id)
     db.session.delete(membro)
     db.session.commit()
-    flash("Associação removida.", "sucesso")
+    flash("Associação removida.", "success")
     return redirect(url_for('admin_panel'))
 
 @app.route('/admin/reset-database', methods=['POST'])
@@ -340,7 +340,6 @@ def reset_database():
     try:
         if 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI']:
             db.session.execute(text("SET CONSTRAINTS ALL DEFERRED"))
-        
         db.session.query(ItemPedido).delete()
         db.session.query(Pedido).delete()
         db.session.query(Avaliacao).delete()
@@ -348,48 +347,35 @@ def reset_database():
         db.session.query(Produto).delete()
         db.session.query(Usuario).delete()
         db.session.commit()
-        
         db.create_all()
         criar_admin_master()
-        
-        flash("Banco de Dados Resetado com Sucesso!", "sucesso")
+        flash("Banco de Dados Resetado com Sucesso!", "success")
     except Exception as e:
         db.session.rollback()
         app.logger.error(f"Erro ao resetar banco: {e}")
         flash(f"Erro ao resetar banco: {str(e)}", "erro")
-
     return redirect(url_for('admin_panel'))
 
 # --- ROTAS PRINCIPAIS ---
 @app.route("/")
 def index():
     ranking = db.session.query(
-        Usuario.id,
-        Usuario.nome_barraca,
-        Usuario.turma,
-        func.sum(Pedido.valor_total).label('total')
+        Usuario.id, Usuario.nome_barraca, Usuario.turma, func.sum(Pedido.valor_total).label('total')
     ).join(Pedido, Usuario.id == Pedido.vendedor_id).filter(Pedido.status == 'Confirmado')\
      .group_by(Usuario.id).order_by(func.sum(Pedido.valor_total).desc()).limit(5).all()
     
     barracas = Usuario.query.filter_by(tipo='vendedor').all()
-    membros_por_barraca = {}
-    for b in barracas:
-        associacoes = MembroBarraca.query.filter_by(barraca_id=b.id, status='aprovado').all()
-        membros_por_barraca[b.id] = {
-            'lider': b,
-            'membros': [a.usuario for a in associacoes]
-        }
+    membros_por_barraca = {
+        b.id: {'lider': b, 'membros': [a.usuario for a in MembroBarraca.query.filter_by(barraca_id=b.id, status='aprovado').all()]}
+        for b in barracas
+    }
 
     is_membro_ativo = False
     if current_user.is_authenticated and current_user.tipo == 'cliente':
-        if MembroBarraca.query.filter_by(usuario_id=current_user.id, status='aprovado').first():
-            is_membro_ativo = True
+        is_membro_ativo = bool(MembroBarraca.query.filter_by(usuario_id=current_user.id, status='aprovado').first())
 
-    return render_template("index.html",
-                           barracas=barracas,
-                           ranking=ranking,
-                           membros_por_barraca=membros_por_barraca,
-                           is_membro_ativo=is_membro_ativo)
+    return render_template("index.html", barracas=barracas, ranking=ranking,
+                           membros_por_barraca=membros_por_barraca, is_membro_ativo=is_membro_ativo)
 
 @app.route("/barraca/<int:usuario_id>", methods=["GET", "POST"])
 @login_required
@@ -419,15 +405,10 @@ def ver_barraca(usuario_id):
                  flash("Você já avaliou esta barraca.", "erro")
                  return redirect(url_for('ver_barraca', usuario_id=usuario_id))
 
-            comentario = request.form.get('comentario', '').strip()
-            db.session.add(Avaliacao(
-                 nota=nota_int,
-                comentario=comentario or None,
-                autor_id=current_user.id,
-                barraca_id=barraca.id
-            ))
+            db.session.add(Avaliacao(nota=nota_int, comentario=request.form.get('comentario', '').strip() or None,
+                                     autor_id=current_user.id, barraca_id=barraca.id))
             db.session.commit()
-            flash("Avaliação enviada com sucesso!", "sucesso")
+            flash("Avaliação enviada com sucesso!", "success")
             return redirect(url_for('ver_barraca', usuario_id=usuario_id))
 
         total_pedido = 0
@@ -444,32 +425,24 @@ def ver_barraca(usuario_id):
             db.session.add(novo_pedido)
             db.session.flush()
             for item in itens_selecionados:
-                db.session.add(ItemPedido(
-                    pedido_id=novo_pedido.id,
-                    produto_nome=item['p'].nome,
-                    quantidade=item['qtd'],
-                    preco_unitario=item['p'].preco
-                ))
+                db.session.add(ItemPedido(pedido_id=novo_pedido.id, produto_nome=item['p'].nome, quantidade=item['qtd'], preco_unitario=item['p'].preco))
             db.session.commit()
             return render_template("pagamento_pix.html", pedido=novo_pedido, barraca=barraca)
-        else:
-            flash("Selecione a quantidade de pelo menos um produto!", "erro")
+        flash("Selecione a quantidade de pelo menos um produto!", "erro")
 
-    return render_template("ver_barraca.html", barraca=barraca, produtos=produtos,
-                           avaliacoes=avaliacoes, media_nota=media_nota)
+    return render_template("ver_barraca.html", barraca=barraca, produtos=produtos, avaliacoes=avaliacoes, media_nota=media_nota)
 
 @app.route("/deletar_avaliacao/<int:id>")
 @login_required
 def deletar_avaliacao(id):
     av = Avaliacao.query.get_or_404(id)
+    barraca_id = av.barraca_id
     if av.autor_id == current_user.id or current_user.is_admin:
-        barraca_id = av.barraca_id
         db.session.delete(av)
         db.session.commit()
-        flash("Avaliação removida.", "sucesso")
+        flash("Avaliação removida.", "success")
     else:
         flash("Acesso negado.", "erro")
-        barraca_id = av.barraca_id
     return redirect(url_for('ver_barraca', usuario_id=barraca_id))
 
 @app.route("/dashboard")
@@ -500,10 +473,8 @@ def dashboard():
         solicitacoes = MembroBarraca.query.filter_by(barraca_id=barraca_id, status='pendente').all()
         membros_aprovados = MembroBarraca.query.filter_by(barraca_id=barraca_id, status='aprovado').all()
 
-    return render_template("dashboard.html",
-                           pendentes=pendentes, confirmadas=confirmados,
-                           total=total_ganho, media=media_valor,
-                           barraca=barraca, is_lider=is_lider,
+    return render_template("dashboard.html", pendentes=pendentes, confirmadas=confirmados,
+                           total=total_ganho, media=media_valor, barraca=barraca, is_lider=is_lider,
                            solicitacoes=solicitacoes, membros_aprovados=membros_aprovados)
 
 @app.route("/confirmar_pedido/<int:id>")
@@ -513,120 +484,124 @@ def confirmar_pedido(id):
     if usuario_pode_confirmar_pedido(current_user, pedido.vendedor_id) or current_user.is_admin:
         pedido.status = 'Confirmado'
         db.session.commit()
-        flash("Pagamento confirmado com sucesso!", "sucesso")
+        flash("Pagamento confirmado com sucesso!", "success")
     else:
         flash("Você não tem permissão para confirmar pedidos.", "erro")
     return redirect(url_for('dashboard'))
 
-# --- MEMBROS ---
+# --- GERENCIAR BARRACA (CORRIGIDO) ---
 @app.route('/gerenciar_barraca', methods=['GET', 'POST'])
 @login_required
 def gerenciar_barraca():
-    # CORREÇÃO DO ERRO REPORTADO: Indentação corrigida aqui
-    if current_user.tipo != 'vendedor' and not usuario_pode_gerenciar_membros(current_user, current_user.id):
+    # 1. Identificar a barraca alvo e permissões
+    if current_user.tipo == 'vendedor':
+        barraca_id = current_user.id
+        tem_permissao = True
+    else:
+        associacao = MembroBarraca.query.filter_by(usuario_id=current_user.id, status='aprovado').first()
+        if not associacao:
+            flash('Você não está associado a nenhuma barraca ativa.', 'danger')
+            return redirect(url_for('index'))
+        barraca_id = associacao.barraca_id
+        tem_permissao = usuario_pode_gerenciar_membros(current_user, barraca_id)
+
+    if not tem_permissao:
         flash('Acesso negado.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('dashboard'))
+
+    # 2. Carregar a barraca correta (objeto Usuario)
+    barraca = Usuario.query.get_or_404(barraca_id)
 
     if request.method == "POST":
         acao = request.form.get("acao")
-
         if acao == "info":
-            current_user.nome_barraca = request.form.get("nome_barraca", "").strip() or current_user.nome_barraca
-            current_user.pix = request.form.get("pix", "").strip() or current_user.pix
-            current_user.descricao = request.form.get("descricao", "").strip() or None
+            barraca.nome_barraca = request.form.get("nome_barraca", "").strip() or barraca.nome_barraca
+            barraca.pix = request.form.get("pix", "").strip() or barraca.pix
+            barraca.descricao = request.form.get("descricao", "").strip() or None
             try:
-                custo = float(request.form.get("custo_operacional", 0) or 0)
-                current_user.custo_operacional = custo
+                custo = float(request.form.get("custo_operacional", "0") or "0")
+                barraca.custo_operacional = custo
             except ValueError:
                 pass
             db.session.commit()
-            flash("Informações da barraca atualizadas!", "sucesso")
+            flash("Informações da barraca atualizadas!", "success")
 
         elif acao == "foto_estande":
             foto = request.files.get("foto_estande")
             if foto and foto.filename:
                 if CLOUDINARY_AVAILABLE:
                     try:
-                        resultado = cloudinary.uploader.upload(
-                            foto,
-                            folder="saleshub_estandes",
-                            public_id=f"estande_{current_user.id}",
-                            overwrite=True,
-                            transformation={'width': 800, 'height': 600, 'crop': 'fill'}
-                        )
-                        current_user.foto_estande = resultado['secure_url']
+                        resultado = cloudinary.uploader.upload(foto, folder="saleshub_estandes", public_id=f"estande_{barraca_id}", overwrite=True, transformation={'width': 800, 'height': 600, 'crop': 'fill'})
+                        barraca.foto_estande = resultado['secure_url']
                     except Exception as e:
-                        flash(f"Erro ao enviar foto: {e}", "erro")
+                        flash(f"Erro ao enviar foto: {e}", "error")
                         return redirect(url_for('gerenciar_barraca'))
                 else:
                     dados = base64.b64encode(foto.read()).decode('utf-8')
-                    current_user.foto_estande = f"data:{foto.mimetype};base64,{dados}"
+                    barraca.foto_estande = f"data:{foto.mimetype};base64,{dados}"
                 db.session.commit()
-                flash("Foto do estande atualizada!", "sucesso")
+                flash("Foto do estande atualizada!", "success")
             else:
-                flash("Selecione uma imagem.", "erro")
+                flash("Selecione uma imagem.", "error")
 
         elif acao == "foto_qrcode":
             foto = request.files.get("foto_qrcode")
             if foto and foto.filename:
                 if CLOUDINARY_AVAILABLE:
                     try:
-                        resultado = cloudinary.uploader.upload(
-                            foto,
-                            folder="saleshub_qrcodes",
-                            public_id=f"qrcode_{current_user.id}",
-                            overwrite=True,
-                            transformation={'width': 400, 'height': 400, 'crop': 'fill'}
-                        )
-                        current_user.foto_qrcode_pix = resultado['secure_url']
+                        resultado = cloudinary.uploader.upload(foto, folder="saleshub_qrcodes", public_id=f"qrcode_{barraca_id}", overwrite=True, transformation={'width': 400, 'height': 400, 'crop': 'fill'})
+                        barraca.foto_qrcode_pix = resultado['secure_url']
                     except Exception as e:
-                        flash(f"Erro ao enviar QR code: {e}", "erro")
+                        flash(f"Erro ao enviar QR code: {e}", "error")
                         return redirect(url_for('gerenciar_barraca'))
                 else:
                     dados = base64.b64encode(foto.read()).decode('utf-8')
-                    current_user.foto_qrcode_pix = f"{foto.mimetype};base64,{dados}"
+                    barraca.foto_qrcode_pix = f"data:{foto.mimetype};base64,{dados}"
                 db.session.commit()
-                flash("QR Code do PIX atualizado!", "sucesso")
+                flash("QR Code do PIX atualizado!", "success")
             else:
-                flash("Selecione uma imagem.", "erro")
+                flash("Selecione uma imagem.", "error")
 
         elif acao == "remover_foto_estande":
-            current_user.foto_estande = None
+            barraca.foto_estande = None
             db.session.commit()
-            flash("Foto do estande removida.", "sucesso")
-
+            flash("Foto do estande removida.", "success")
         elif acao == "remover_qrcode":
-            current_user.foto_qrcode_pix = None
+            barraca.foto_qrcode_pix = None
             db.session.commit()
-            flash("QR Code removido.", "sucesso")
-
+            flash("QR Code removido.", "success")
+        
         return redirect(url_for('gerenciar_barraca'))
 
-    # Estatísticas rápidas para exibir
-    total_pedidos = Pedido.query.filter_by(vendedor_id=current_user.id, status='Confirmado').count()
-    total_ganho = db.session.query(func.sum(Pedido.valor_total)).filter_by(
-        vendedor_id=current_user.id, status='Confirmado').scalar() or 0
-    total_produtos = Produto.query.filter_by(usuario_id=current_user.id).count()
-    membros_aprovados_count = MembroBarraca.query.filter_by(barraca_id=current_user.id, status='aprovado').count()
-    solicitacoes_pendentes = MembroBarraca.query.filter_by(barraca_id=current_user.id, status='pendente').all()
-    membros = MembroBarraca.query.filter_by(barraca_id=current_user.id, status='aprovado').all()
+    total_pedidos = Pedido.query.filter_by(vendedor_id=barraca_id, status='Confirmado').count()
+    total_ganho = db.session.query(func.sum(Pedido.valor_total)).filter_by(vendedor_id=barraca_id, status='Confirmado').scalar() or 0
+    total_produtos = Produto.query.filter_by(usuario_id=barraca_id).count()
+    membros_aprovados = MembroBarraca.query.filter_by(barraca_id=barraca_id, status='aprovado').count()
+    solicitacoes_pendentes = MembroBarraca.query.filter_by(barraca_id=barraca_id, status='pendente').all()
+    membros = MembroBarraca.query.filter_by(barraca_id=barraca_id, status='aprovado').all()
 
-    return render_template("gerenciar_barraca.html",
-                           total_pedidos=total_pedidos,
-                           total_ganho=total_ganho,
-                           total_produtos=total_produtos,
-                           membros_aprovados=membros_aprovados_count,
-                           solicitacoes=solicitacoes_pendentes,
-                           membros=membros)
+    return render_template("gerenciar_barraca.html", total_pedidos=total_pedidos, total_ganho=total_ganho,
+                           total_produtos=total_produtos, membros_aprovados=membros_aprovados,
+                           solicitacoes=solicitacoes_pendentes, membros=membros)
 
 @app.route("/gerenciar_membros", methods=["GET", "POST"])
 @login_required
 def gerenciar_membros():
-    if current_user.tipo != 'vendedor' and not usuario_pode_gerenciar_membros(current_user, current_user.id):
+    if current_user.tipo == 'vendedor':
+        barraca_id = current_user.id
+        tem_permissao = True
+    else:
+        associacao = MembroBarraca.query.filter_by(usuario_id=current_user.id, status='aprovado').first()
+        if not associacao:
+            flash('Acesso negado: sem associação ativa.', 'danger')
+            return redirect(url_for('index'))
+        barraca_id = associacao.barraca_id
+        tem_permissao = usuario_pode_gerenciar_membros(current_user, barraca_id)
+        
+    if not tem_permissao:
         flash('Acesso negado.', 'danger')
-        return redirect(url_for('index'))
-    
-    barraca_id = current_user.id
+        return redirect(url_for('dashboard'))
+
     if request.method == "POST":
         acao = request.form.get("acao")
         membro = MembroBarraca.query.get_or_404(request.form.get("membro_id"))
@@ -636,17 +611,17 @@ def gerenciar_membros():
         if acao == "aprovar":
             membro.status = 'aprovado'
             db.session.commit()
-            flash(f"{membro.usuario.username} aprovado com sucesso!", "sucesso")
+            flash(f"{membro.usuario.username} aprovado com sucesso!", "success")
         elif acao == "rejeitar":
             db.session.delete(membro)
             db.session.commit()
-            flash("Solicitação rejeitada.", "sucesso")
+            flash("Solicitação rejeitada.", "success")
         elif acao == "atualizar_permissoes":
             membro.pode_criar_produto = 'pode_criar_produto' in request.form
             membro.pode_confirmar_pedido = 'pode_confirmar_pedido' in request.form
             membro.pode_gerenciar_membros = 'pode_gerenciar_membros' in request.form
             db.session.commit()
-            flash("Permissões atualizadas.", "sucesso")
+            flash("Permissões atualizadas.", "success")
         return redirect(url_for('gerenciar_membros'))
 
     return render_template("gerenciar_membros.html",
@@ -668,15 +643,13 @@ def cadastro():
         papel = request.form.get("papel")
 
         if tipo == "vendedor" and papel == "lider":
-            novo = Usuario(
-                username=username, senha=senha_hash, tipo="vendedor",
-                nome_barraca=request.form.get("nome"), pix=request.form.get("pix"),
-                turma=request.form.get("turma"), professor_responsavel=request.form.get("professor"),
-                ip_registro=request.remote_addr, dispositivo=request.headers.get('User-Agent')
-            )
+            novo = Usuario(username=username, senha=senha_hash, tipo="vendedor",
+                           nome_barraca=request.form.get("nome"), pix=request.form.get("pix"),
+                           turma=request.form.get("turma"), professor_responsavel=request.form.get("professor"),
+                           ip_registro=request.remote_addr, dispositivo=request.headers.get('User-Agent'))
             db.session.add(novo)
             db.session.commit()
-            flash("Barraca criada com sucesso! Bem-vindo ao SalesHub.", "sucesso")
+            flash("Barraca criada com sucesso! Bem-vindo ao SalesHub.", "success")
             login_user(novo)
             return redirect(url_for("dashboard"))
 
@@ -685,29 +658,23 @@ def cadastro():
             if not barraca_id:
                 flash("Selecione uma barraca para se associar.", "erro")
                 return redirect(url_for("cadastro"))
-            novo = Usuario(
-                username=username, senha=senha_hash, tipo="cliente",
-                ip_registro=request.remote_addr, dispositivo=request.headers.get('User-Agent')
-            )
+            novo = Usuario(username=username, senha=senha_hash, tipo="cliente",
+                           ip_registro=request.remote_addr, dispositivo=request.headers.get('User-Agent'))
             db.session.add(novo)
             db.session.flush()
             db.session.add(MembroBarraca(usuario_id=novo.id, barraca_id=int(barraca_id), status='pendente'))
             db.session.commit()
-            flash("Conta criada! Aguarde a aprovação do líder da barraca.", "sucesso")
+            flash("Conta criada! Aguarde a aprovação do líder da barraca.", "success")
             login_user(novo)
             return redirect(url_for("index"))
-
         else:
-            novo = Usuario(
-                username=username, senha=senha_hash, tipo="cliente",
-                ip_registro=request.remote_addr, dispositivo=request.headers.get('User-Agent')
-            )
+            novo = Usuario(username=username, senha=senha_hash, tipo="cliente",
+                           ip_registro=request.remote_addr, dispositivo=request.headers.get('User-Agent'))
             db.session.add(novo)
             db.session.commit()
-            flash("Conta criada com sucesso! Bem-vindo ao SalesHub.", "sucesso")
+            flash("Conta criada com sucesso! Bem-vindo ao SalesHub.", "success")
             login_user(novo)
             return redirect(url_for("index"))
-
     return render_template("cadastro.html", professores=PROFESSORES_AUTORIZADOS, barracas=barracas_disponiveis)
 
 @app.route("/login", methods=["GET", "POST"])
@@ -716,9 +683,8 @@ def login():
         user = Usuario.query.filter_by(username=request.form.get("username")).first()
         if user and check_password_hash(user.senha, request.form.get("senha")):
             login_user(user)
-            flash(f"Bem-vindo de volta, {user.username}!", "sucesso")
-            if user.is_admin:
-                return redirect(url_for("admin_panel"))
+            flash(f"Bem-vindo de volta, {user.username}!", "success")
+            if user.is_admin: return redirect(url_for("admin_panel"))
             return redirect(url_for("dashboard") if user.tipo == 'vendedor' else url_for("index"))
         flash("Usuário ou senha incorretos.", "erro")
     return render_template("login.html")
@@ -732,172 +698,65 @@ def logout():
 @app.route('/admin/criar_backup', methods=['POST'])
 @login_required
 def criar_backup():
-    if not current_user.is_admin:
-        abort(403)
+    if not current_user.is_admin: abort(403)
     dados = {
         'backup_em': datetime.utcnow().isoformat(),
-        'usuarios': [
-            {
-                'id': u.id, 'username': u.username, 'senha': u.senha,
-                'tipo': u.tipo, 'is_admin': u.is_admin,
-                'nome_barraca': u.nome_barraca, 'pix': u.pix,
-                'turma': u.turma, 'professor_responsavel': u.professor_responsavel,
-                'ip_registro': u.ip_registro, 'dispositivo': u.dispositivo,
-                'foto_perfil': u.foto_perfil, 'serie': u.serie, 'descricao': u.descricao
-            } for u in Usuario.query.all()
-        ],
-        'produtos': [
-            {'id': p.id, 'nome': p.nome, 'preco': p.preco,
-             'descricao': p.descricao, 'usuario_id': p.usuario_id}
-            for p in Produto.query.all()
-        ],
-        'pedidos': [
-            {
-                'id': ped.id, 'valor_total': ped.valor_total,
-                'status': ped.status, 'data_hora': ped.data_hora.isoformat() if ped.data_hora else None,
-                'cliente_id': ped.cliente_id, 'vendedor_id': ped.vendedor_id,
-                'itens': [
-                    {'produto_nome': it.produto_nome, 'quantidade': it.quantidade,
-                     'preco_unitario': it.preco_unitario}
-                    for it in ped.itens
-                ]
-            } for ped in Pedido.query.all()
-        ],
-        'avaliacoes': [
-            {'id': a.id, 'nota': a.nota, 'comentario': a.comentario,
-             'data_hora': a.data_hora.isoformat() if a.data_hora else None,
-             'autor_id': a.autor_id, 'barraca_id': a.barraca_id}
-            for a in Avaliacao.query.all()
-        ],
-        'membros_barraca': [
-            {
-                'id': m.id, 'usuario_id': m.usuario_id, 'barraca_id': m.barraca_id,
-                'status': m.status, 'data_solicitacao': m.data_solicitacao.isoformat() if m.data_solicitacao else None,
-                'pode_criar_produto': m.pode_criar_produto,
-                'pode_confirmar_pedido': m.pode_confirmar_pedido,
-                'pode_gerenciar_membros': m.pode_gerenciar_membros
-            } for m in MembroBarraca.query.all()
-        ]
+        'usuarios': [{'id': u.id, 'username': u.username, 'senha': u.senha, 'tipo': u.tipo, 'is_admin': u.is_admin,
+                      'nome_barraca': u.nome_barraca, 'pix': u.pix, 'turma': u.turma, 'professor_responsavel': u.professor_responsavel,
+                      'ip_registro': u.ip_registro, 'dispositivo': u.dispositivo, 'foto_perfil': u.foto_perfil, 'serie': u.serie, 'descricao': u.descricao} for u in Usuario.query.all()],
+        'produtos': [{'id': p.id, 'nome': p.nome, 'preco': p.preco, 'descricao': p.descricao, 'usuario_id': p.usuario_id} for p in Produto.query.all()],
+        'pedidos': [{'id': ped.id, 'valor_total': ped.valor_total, 'status': ped.status, 'data_hora': ped.data_hora.isoformat() if ped.data_hora else None, 'cliente_id': ped.cliente_id, 'vendedor_id': ped.vendedor_id, 'itens': [{'produto_nome': it.produto_nome, 'quantidade': it.quantidade, 'preco_unitario': it.preco_unitario} for it in ped.itens]} for ped in Pedido.query.all()],
+        'avaliacoes': [{'id': a.id, 'nota': a.nota, 'comentario': a.comentario, 'data_hora': a.data_hora.isoformat() if a.data_hora else None, 'autor_id': a.autor_id, 'barraca_id': a.barraca_id} for a in Avaliacao.query.all()],
+        'membros_barraca': [{'id': m.id, 'usuario_id': m.usuario_id, 'barraca_id': m.barraca_id, 'status': m.status, 'data_solicitacao': m.data_solicitacao.isoformat() if m.data_solicitacao else None, 'pode_criar_produto': m.pode_criar_produto, 'pode_confirmar_pedido': m.pode_confirmar_pedido, 'pode_gerenciar_membros': m.pode_gerenciar_membros} for m in MembroBarraca.query.all()]
     }
-
     arquivo = io.BytesIO(json.dumps(dados, ensure_ascii=False, indent=2).encode('utf-8'))
-    nome = f"backup_saleshub_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
-    return send_file(arquivo, download_name=nome, as_attachment=True, mimetype='application/json')
+    return send_file(arquivo, download_name=f"backup_saleshub_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json", as_attachment=True, mimetype='application/json')
 
 @app.route('/admin/restaurar_backup', methods=['POST'])
 @login_required
 def restaurar_backup():
-    if not current_user.is_admin:
-        abort(403)
+    if not current_user.is_admin: abort(403)
     arquivo = request.files.get('arquivo_backup')
-    if not arquivo or not arquivo.filename:
-        flash("Nenhum arquivo selecionado.", "erro")
-        return redirect(url_for('admin_panel'))
-
-    if not arquivo.filename.endswith('.json'):
-        flash("O arquivo deve ser um .json válido.", "erro")
-        return redirect(url_for('admin_panel'))
-
+    if not arquivo or not arquivo.filename: flash("Nenhum arquivo selecionado.", "erro"); return redirect(url_for('admin_panel'))
+    if not arquivo.filename.endswith('.json'): flash("O arquivo deve ser um .json válido.", "erro"); return redirect(url_for('admin_panel'))
+    
+    try: conteudo = json.loads(arquivo.read().decode('utf-8'))
+    except: flash("Erro ao ler o arquivo JSON.", "erro"); return redirect(url_for('admin_panel'))
+    
+    if request.form.get('confirmar_restauracao') != 'RESTAURAR':
+        flash("Confirme a restauração marcando a caixa de confirmação.", "erro"); return redirect(url_for('admin_panel'))
     try:
-        conteudo = json.loads(arquivo.read().decode('utf-8'))
-    except Exception:
-        flash("Erro ao ler o arquivo JSON.", "erro")
-        return redirect(url_for('admin_panel'))
-
-    confirmacao = request.form.get('confirmar_restauracao')
-    if confirmacao != 'RESTAURAR':
-        flash("Confirme a restauração marcando a caixa de confirmação.", "erro")
-        return redirect(url_for('admin_panel'))
-
-    try:
-        db.session.query(ItemPedido).delete()
-        db.session.query(Pedido).delete()
-        db.session.query(Avaliacao).delete()
-        db.session.query(MembroBarraca).delete()
-        db.session.query(Produto).delete()
-        db.session.query(Usuario).delete()
+        db.session.query(ItemPedido).delete(); db.session.query(Pedido).delete(); db.session.query(Avaliacao).delete()
+        db.session.query(MembroBarraca).delete(); db.session.query(Produto).delete(); db.session.query(Usuario).delete()
         db.session.commit()
-
         id_map = {}
         for u_data in conteudo.get('usuarios', []):
-            novo = Usuario(
-                id=u_data['id'], username=u_data['username'], senha=u_data['senha'],
-                tipo=u_data['tipo'], is_admin=u_data['is_admin'],
-                nome_barraca=u_data.get('nome_barraca'), pix=u_data.get('pix'),
-                turma=u_data.get('turma'), professor_responsavel=u_data.get('professor_responsavel'),
-                ip_registro=u_data.get('ip_registro'), dispositivo=u_data.get('dispositivo'),
-                foto_perfil=u_data.get('foto_perfil'), serie=u_data.get('serie'),
-                descricao=u_data.get('descricao')
-            )
-            db.session.add(novo)
-            id_map[u_data['id']] = novo.id
-
-        db.session.commit() 
-
-        for p_data in conteudo.get('produtos', []):
-            db.session.add(Produto(
-                nome=p_data['nome'], preco=p_data['preco'],
-                descricao=p_data.get('descricao'),
-                usuario_id=id_map.get(p_data['usuario_id'], p_data['usuario_id'])
-            ))
-
-        for m_data in conteudo.get('membros_barraca', []):
-            db.session.add(MembroBarraca(
-                usuario_id=id_map.get(m_data['usuario_id'], m_data['usuario_id']),
-                barraca_id=id_map.get(m_data['barraca_id'], m_data['barraca_id']),
-                status=m_data['status'],
-                pode_criar_produto=m_data.get('pode_criar_produto', False),
-                pode_confirmar_pedido=m_data.get('pode_confirmar_pedido', False),
-                pode_gerenciar_membros=m_data.get('pode_gerenciar_membros', False)
-            ))
-
-        for a_data in conteudo.get('avaliacoes', []):
-            db.session.add(Avaliacao(
-                 nota=a_data['nota'], comentario=a_data.get('comentario'),
-                autor_id=id_map.get(a_data['autor_id'], a_data['autor_id']),
-                barraca_id=id_map.get(a_data['barraca_id'], a_data['barraca_id'])
-            ))
-
-        for ped_data in conteudo.get('pedidos', []):
-            novo_pedido = Pedido(
-                valor_total=ped_data['valor_total'], status=ped_data['status'],
-                cliente_id=id_map.get(ped_data['cliente_id'], ped_data['cliente_id']),
-                vendedor_id=id_map.get(ped_data['vendedor_id'], ped_data['vendedor_id'])
-            )
-            db.session.add(novo_pedido)
-            db.session.flush()
-            for it_data in ped_data.get('itens', []):
-                db.session.add(ItemPedido(
-                     pedido_id=novo_pedido.id,
-                    produto_nome=it_data['produto_nome'],
-                    quantidade=it_data['quantidade'],
-                    preco_unitario=it_data['preco_unitario']
-                ))
-
+            novo = Usuario(id=u_data['id'], username=u_data['username'], senha=u_data['senha'], tipo=u_data['tipo'], is_admin=u_data['is_admin'], nome_barraca=u_data.get('nome_barraca'), pix=u_data.get('pix'), turma=u_data.get('turma'), professor_responsavel=u_data.get('professor_responsavel'), ip_registro=u_data.get('ip_registro'), dispositivo=u_data.get('dispositivo'), foto_perfil=u_data.get('foto_perfil'), serie=u_data.get('serie'), descricao=u_data.get('descricao'))
+            db.session.add(novo); id_map[u_data['id']] = novo.id
         db.session.commit()
-        flash(f"Backup restaurado com sucesso! {len(conteudo.get('usuarios', []))} usuários recuperados.", "sucesso")
-
+        
+        for p_data in conteudo.get('produtos', []): db.session.add(Produto(nome=p_data['nome'], preco=p_data['preco'], descricao=p_data.get('descricao'), usuario_id=id_map.get(p_data['usuario_id'], p_data['usuario_id'])))
+        for m_data in conteudo.get('membros_barraca', []): db.session.add(MembroBarraca(usuario_id=id_map.get(m_data['usuario_id'], m_data['usuario_id']), barraca_id=id_map.get(m_data['barraca_id'], m_data['barraca_id']), status=m_data['status'], pode_criar_produto=m_data.get('pode_criar_produto', False), pode_confirmar_pedido=m_data.get('pode_confirmar_pedido', False), pode_gerenciar_membros=m_data.get('pode_gerenciar_membros', False)))
+        for a_data in conteudo.get('avaliacoes', []): db.session.add(Avaliacao(nota=a_data['nota'], comentario=a_data.get('comentario'), autor_id=id_map.get(a_data['autor_id'], a_data['autor_id']), barraca_id=id_map.get(a_data['barraca_id'], a_data['barraca_id'])))
+        for ped_data in conteudo.get('pedidos', []):
+            novo_pedido = Pedido(valor_total=ped_data['valor_total'], status=ped_data['status'], cliente_id=id_map.get(ped_data['cliente_id'], ped_data['cliente_id']), vendedor_id=id_map.get(ped_data['vendedor_id'], ped_data['vendedor_id']))
+            db.session.add(novo_pedido); db.session.flush()
+            for it_data in ped_data.get('itens', []): db.session.add(ItemPedido(pedido_id=novo_pedido.id, produto_nome=it_data['produto_nome'], quantidade=it_data['quantidade'], preco_unitario=it_data['preco_unitario']))
+        db.session.commit()
+        flash(f"Backup restaurado com sucesso! {len(conteudo.get('usuarios', []))} usuários recuperados.", "success")
     except Exception as e:
         db.session.rollback()
         app.logger.error(f"Erro na restauração: {e}")
         flash(f"Erro ao restaurar backup: {str(e)}", "erro")
-
     return redirect(url_for('admin_panel'))
 
-# --- HEALTH CHECK ---
 @app.route('/health')
 def health():
     return 'OK', 200
 
-# --- INICIALIZAÇÃO ---
 def criar_admin_master():
     if not Usuario.query.filter_by(username="Arthur").first():
-        db.session.add(Usuario(
-            username="Arthur",
-            senha=generate_password_hash("zayron"),
-            tipo="vendedor", is_admin=True,
-            nome_barraca="Administração Central", turma="TI"
-        ))
+        db.session.add(Usuario(username="Arthur", senha=generate_password_hash("zayron"), tipo="vendedor", is_admin=True, nome_barraca="Administração Central", turma="TI"))
         db.session.commit()
         app.logger.info("✅ Admin Arthur criado!")
 
@@ -906,8 +765,7 @@ _inicializado = False
 @app.before_request
 def inicializar_uma_vez():
     global _inicializado
-    if _inicializado:
-        return
+    if _inicializado: return
     _inicializado = True
     try:
         db.create_all()
@@ -919,4 +777,3 @@ def inicializar_uma_vez():
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, host="0.0.0.0", port=port)
-```
