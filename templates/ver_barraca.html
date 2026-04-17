@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ barraca.nome_barraca }} — SalesHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -14,8 +15,13 @@
             --border: rgba(255,255,255,0.07);
             --border2: rgba(255,255,255,0.12);
             --accent: #7c6ef7;
+            --accent-dim: rgba(124,110,247,0.12);
             --green: #22c55e;
             --green-dim: rgba(34,197,94,0.12);
+            --gold: #f59e0b;
+            --gold-dim: rgba(245,158,11,0.10);
+            --danger: #ef4444;
+            --danger-dim: rgba(239,68,68,0.08);
             --text: #f1f0ff;
             --muted: #6e6a8a;
             --muted2: #9e9bb8;
@@ -29,7 +35,7 @@
             padding-bottom: 100px;
         }
 
-        /* ── HEADER ── */
+        /* ── HEADER ORIGINAL MANTIDO ── */
         .header {
             background: var(--surface);
             border-bottom: 1px solid var(--border);
@@ -71,16 +77,27 @@
 
         .btn-back:hover { color: var(--text); }
 
-        /* ── WRAPPER ── */
+        /* ── WRAPPER ORIGINAL ── */
         .wrapper {
             max-width: 480px;
             margin: 0 auto;
             padding: 24px 20px 0;
         }
 
-        /* ── BARRACA HERO CARD ── */
+        /* ── MENSAGENS FLASH (Novidade Útil) ── */
+        .flash-sucesso, .flash-erro {
+            border-radius: 14px; padding: 12px 16px; font-size: 14px;
+            margin-bottom: 24px; display: flex; align-items: center; gap: 10px;
+        }
+        .flash-sucesso { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); color: var(--green); }
+        .flash-erro { background: var(--danger-dim); border: 1px solid rgba(239,68,68,0.2); color: var(--danger); }
+        .flash-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+        .flash-sucesso .flash-icon { background: rgba(34,197,94,0.15); color: var(--green); }
+        .flash-erro .flash-icon { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+        /* ── BARRACA HERO CARD ORIGINAL (Adaptado para Foto de Estande e Perfil) ── */
         .barraca-hero {
-            background: var(--accent);
+            background-color: var(--accent);
             border-radius: 22px;
             padding: 24px 22px;
             margin-bottom: 24px;
@@ -89,213 +106,197 @@
         }
 
         .barraca-hero::before {
-            content: '';
-            position: absolute;
-            top: -40px; right: -40px;
-            width: 130px; height: 130px;
-            background: rgba(255,255,255,0.07);
-            border-radius: 50%;
+            content: ''; position: absolute; top: -40px; right: -40px;
+            width: 130px; height: 130px; background: rgba(255,255,255,0.07); border-radius: 50%;
         }
 
         .barraca-hero::after {
-            content: '';
-            position: absolute;
-            bottom: -50px; left: 10px;
-            width: 100px; height: 100px;
-            background: rgba(255,255,255,0.04);
-            border-radius: 50%;
+            content: ''; position: absolute; bottom: -50px; left: 10px;
+            width: 100px; height: 100px; background: rgba(255,255,255,0.04); border-radius: 50%;
+        }
+
+        .barraca-hero-content { position: relative; z-index: 10; }
+
+        .barraca-hero-top { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+        
+        .barraca-hero-avatar {
+            width: 56px; height: 56px;
+            border-radius: 14px;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.2);
+            background: var(--surface2);
+            display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;
         }
 
         .barraca-hero-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: rgba(255,255,255,0.55);
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            margin-bottom: 5px;
+            font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.65);
+            text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 5px;
         }
 
         .barraca-hero-name {
-            font-size: 24px;
-            font-weight: 800;
-            color: #fff;
-            letter-spacing: -0.4px;
-            margin-bottom: 10px;
+            font-size: 24px; font-weight: 800; color: #fff; letter-spacing: -0.4px;
         }
 
-        .barraca-hero-meta {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .barraca-hero-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
         .barraca-tag {
-            background: rgba(255,255,255,0.15);
-            color: #fff;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 20px;
+            background: rgba(255,255,255,0.15); color: #fff;
+            font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px;
         }
 
-        .barraca-prof {
-            font-size: 12px;
-            color: rgba(255,255,255,0.6);
+        .barraca-prof { font-size: 12px; color: rgba(255,255,255,0.7); }
+
+        .barraca-desc {
+            margin-top: 14px; font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.5;
         }
 
         /* ── SECTION TITLE ── */
         .section-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 14px;
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px;
         }
 
-        /* ── PRODUTO CARD ── */
+        /* ── PRODUTO CARD ORIGINAL ── */
         .product-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 18px;
-            margin-bottom: 12px;
-            transition: border-color 0.15s;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 18px; padding: 18px; margin-bottom: 12px; transition: border-color 0.15s;
         }
-
         .product-card:hover { border-color: var(--border2); }
+        .product-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+        .product-name { font-size: 16px; font-weight: 700; color: var(--text); flex: 1; padding-right: 12px; }
+        .product-price { font-size: 16px; font-weight: 800; color: var(--green); flex-shrink: 0; }
+        .product-desc { font-size: 13px; color: var(--muted2); line-height: 1.5; margin-bottom: 16px; }
 
-        .product-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 6px;
-        }
-
-        .product-name {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text);
-            flex: 1;
-            padding-right: 12px;
-        }
-
-        .product-price {
-            font-size: 16px;
-            font-weight: 800;
-            color: var(--green);
-            flex-shrink: 0;
-        }
-
-        .product-desc {
-            font-size: 13px;
-            color: var(--muted2);
-            line-height: 1.5;
-            margin-bottom: 16px;
-        }
-
-        /* ── QUANTIDADE ── */
+        /* ── QUANTIDADE ORIGINAL ── */
         .qty-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--surface2);
-            border: 1px solid var(--border2);
-            border-radius: 12px;
-            padding: 10px 14px;
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: 12px; padding: 10px 14px;
         }
-
-        .qty-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--muted2);
-        }
-
-        .qty-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
+        .qty-label { font-size: 12px; font-weight: 600; color: var(--muted2); }
+        .qty-controls { display: flex; align-items: center; gap: 10px; }
         .qty-btn {
-            width: 32px; height: 32px;
-            background: var(--surface);
-            border: 1px solid var(--border2);
-            border-radius: 8px;
-            color: var(--text);
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: background 0.15s;
-            user-select: none;
-            line-height: 1;
+            width: 32px; height: 32px; background: var(--surface); border: 1px solid var(--border2);
+            border-radius: 8px; color: var(--text); font-size: 18px; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s; user-select: none; line-height: 1;
         }
-
         .qty-btn:hover { background: var(--border2); }
         .qty-btn:active { transform: scale(0.93); }
-
         .qty-input {
-            width: 48px;
-            height: 32px;
-            background: var(--bg);
-            border: 1px solid var(--accent);
-            border-radius: 8px;
-            color: var(--text);
-            font-size: 16px;
-            font-weight: 800;
-            text-align: center;
-            font-family: inherit;
+            width: 48px; height: 32px; background: var(--bg); border: 1px solid var(--accent);
+            border-radius: 8px; color: var(--text); font-size: 16px; font-weight: 800;
+            text-align: center; font-family: inherit;
         }
-
         .qty-input:focus { outline: none; }
 
-        /* ── EMPTY STATE ── */
+        /* ── AVALIAÇÕES UI (Novidade Útil Adaptada) ── */
+        .rating-summary {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 18px; padding: 20px; margin-bottom: 20px;
+            display: flex; gap: 20px; align-items: center;
+        }
+        .rating-big { text-align: center; flex-shrink: 0; }
+        .rating-number { font-size: 48px; font-weight: 900; color: var(--text); line-height: 1; letter-spacing: -2px; }
+        .stars-display { display: flex; gap: 2px; justify-content: center; margin: 6px 0 4px; }
+        .star-icon { font-size: 14px; }
+        .star-icon.filled { color: var(--gold); }
+        .star-icon.empty { color: var(--muted); }
+        .rating-count { font-size: 11px; color: var(--muted2); }
+        .rating-bars { flex: 1; }
+        .rating-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+        .rating-bar-label { font-size: 11px; color: var(--muted2); width: 12px; text-align: right; flex-shrink: 0; }
+        .rating-bar-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+        .rating-bar-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width 0.6s ease; }
+        .rating-bar-count { font-size: 11px; color: var(--muted); width: 20px; text-align: right; flex-shrink: 0; }
+
+        .avaliacao-form-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 18px; overflow: hidden; margin-bottom: 20px;
+        }
+        .avaliacao-form-header {
+            padding: 14px 18px; border-bottom: 1px solid var(--border); background: var(--surface2);
+            font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px;
+        }
+        .avaliacao-form-body { padding: 18px; }
+        .star-picker { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; direction: rtl; }
+        .star-picker input[type="radio"] { display: none; }
+        .star-picker label { font-size: 32px; cursor: pointer; color: var(--muted); transition: color 0.1s, transform 0.1s; line-height: 1; }
+        .star-picker label:hover, .star-picker label:hover ~ label, .star-picker input:checked ~ label { color: var(--gold); transform: scale(1.15); }
+        .star-picker input:checked + label { color: var(--gold); }
+        
+        .comentario-input {
+            width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 12px;
+            color: var(--text); font-size: 14px; padding: 12px 14px; font-family: inherit;
+            resize: none; height: 80px; line-height: 1.5; transition: border-color 0.15s; margin-bottom: 14px;
+        }
+        .comentario-input:focus { outline: none; border-color: var(--accent); background: rgba(124,110,247,0.04); }
+        
+        .btn-avaliar {
+            width: 100%; height: 48px; background: var(--gold); color: #000;
+            border: none; border-radius: 12px; font-size: 15px; font-weight: 800;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-avaliar:active { transform: scale(0.97); opacity: 0.9; }
+
+        .ja-avaliou {
+            background: var(--gold-dim); border: 1px solid rgba(245,158,11,0.2); border-radius: 14px;
+            padding: 14px 18px; font-size: 13px; color: var(--gold); display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+        }
+
+        .avaliacao-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+            padding: 16px 18px; margin-bottom: 12px; position: relative; transition: border-color 0.15s;
+        }
+        .avaliacao-card.fixado { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.03); }
+        .fixado-badge {
+            position: absolute; top: 14px; right: 14px; background: var(--gold-dim); border: 1px solid rgba(245,158,11,0.25);
+            border-radius: 6px; padding: 3px 8px; font-size: 10px; font-weight: 800; color: var(--gold); display: flex; align-items: center; gap: 4px;
+        }
+        .avaliacao-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .avaliacao-avatar {
+            width: 36px; height: 36px; border-radius: 10px; background: var(--accent-dim); border: 1px solid rgba(124,110,247,0.2);
+            display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: var(--accent); overflow: hidden;
+        }
+        .avaliacao-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .avaliacao-info { flex: 1; min-width: 0; }
+        .avaliacao-autor { font-size: 14px; font-weight: 700; color: var(--text); }
+        .avaliacao-data { font-size: 11px; color: var(--muted2); margin-top: 1px; }
+        .avaliacao-stars { display: flex; gap: 2px; margin-bottom: 8px; }
+        .avaliacao-stars i { font-size: 13px; }
+        .avaliacao-stars .filled { color: var(--gold); }
+        .avaliacao-stars .empty { color: var(--muted); }
+        .avaliacao-comentario { font-size: 14px; color: var(--muted2); line-height: 1.6; margin-bottom: 10px; }
+        .avaliacao-actions { display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+        .btn-acao-av {
+            display: flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700;
+            text-decoration: none; border: none; cursor: pointer; transition: background 0.15s;
+        }
+        .btn-fixar { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(245,158,11,0.2); }
+        .btn-desfixar { background: var(--surface2); color: var(--muted2); border: 1px solid var(--border2); }
+        .btn-deletar-av { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(239,68,68,0.15); }
+
+        /* ── EMPTY STATE ORIGINAL ── */
         .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            color: var(--muted);
-            font-size: 14px;
+            text-align: center; padding: 40px 20px; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 18px; color: var(--muted); font-size: 14px;
         }
 
-        /* ── FOOTER CHECKOUT ── */
+        /* ── FOOTER CHECKOUT ORIGINAL ── */
         .footer-action {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            padding: 16px 20px 24px;
-            background: linear-gradient(to top, var(--bg) 75%, transparent);
-            z-index: 100;
+            position: fixed; bottom: 0; left: 0; right: 0; padding: 16px 20px 24px;
+            background: linear-gradient(to top, var(--bg) 75%, transparent); z-index: 100;
         }
-
         .btn-checkout {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            max-width: 480px;
-            margin: 0 auto;
-            height: 58px;
-            background: var(--green);
-            color: #052e16;
-            border: none;
-            border-radius: 16px;
-            font-size: 16px;
-            font-weight: 800;
-            cursor: pointer;
-            letter-spacing: -0.2px;
-            transition: opacity 0.15s, transform 0.1s;
+            display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; max-width: 480px;
+            margin: 0 auto; height: 58px; background: var(--green); color: #052e16; border: none;
+            border-radius: 16px; font-size: 16px; font-weight: 800; cursor: pointer; letter-spacing: -0.2px; transition: opacity 0.15s, transform 0.1s;
         }
-
         .btn-checkout:active { transform: scale(0.97); opacity: 0.9; }
     </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header">
     <div class="header-left">
         <div class="logo-icon">
@@ -311,17 +312,48 @@
 
 <div class="wrapper">
 
-    <!-- HERO DA BARRACA -->
-    <div class="barraca-hero">
-        <p class="barraca-hero-label">Cardápio</p>
-        <h1 class="barraca-hero-name">{{ barraca.nome_barraca }}</h1>
-        <div class="barraca-hero-meta">
-            <span class="barraca-tag">{{ barraca.turma }}</span>
-            <span class="barraca-prof">Prof. {{ barraca.professor_responsavel }}</span>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          {% if category == 'sucesso' %}
+            <div class="flash-sucesso"><div class="flash-icon">✓</div>{{ message }}</div>
+          {% else %}
+            <div class="flash-erro"><div class="flash-icon">✕</div>{{ message }}</div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="barraca-hero" {% if barraca.foto_estande %}style="background: linear-gradient(rgba(10,10,15,0.4), rgba(10,10,15,0.85)), url('{{ barraca.foto_estande }}') center/cover;"{% endif %}>
+        <div class="barraca-hero-content">
+            <div class="barraca-hero-top">
+                {% if barraca.foto_perfil %}
+                    <img src="{{ barraca.foto_perfil }}" class="barraca-hero-avatar" alt="Avatar">
+                {% else %}
+                    <div class="barraca-hero-avatar">{{ barraca.nome_barraca[0] }}</div>
+                {% endif %}
+                <div>
+                    <p class="barraca-hero-label">Cardápio</p>
+                    <h1 class="barraca-hero-name" style="margin-bottom:0;">{{ barraca.nome_barraca }}</h1>
+                </div>
+            </div>
+            
+            <div class="barraca-hero-meta">
+                <span class="barraca-tag">{{ barraca.turma }}</span>
+                <span class="barraca-prof">Prof. {{ barraca.professor_responsavel }}</span>
+                {% if media_nota %}
+                <span class="barraca-tag" style="background: rgba(245,158,11,0.2); color: #f59e0b;">
+                    <i class="fa-solid fa-star" style="font-size:10px;"></i> {{ media_nota }}
+                </span>
+                {% endif %}
+            </div>
+
+            {% if barraca.descricao %}
+            <p class="barraca-desc">{{ barraca.descricao }}</p>
+            {% endif %}
         </div>
     </div>
 
-    <!-- PRODUTOS -->
     <p class="section-title">Itens Disponíveis</p>
 
     <form method="POST">
@@ -349,6 +381,7 @@
         </div>
         {% else %}
         <div class="empty-state">
+            <i class="fa-solid fa-utensils" style="font-size: 24px; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
             Esta barraca ainda não cadastrou produtos.
         </div>
         {% endfor %}
@@ -356,11 +389,145 @@
         {% if produtos %}
         <div class="footer-action">
             <button type="submit" class="btn-checkout">
-                Finalizar Pedido via PIX →
+                <i class="fa-solid fa-pix"></i> Finalizar Pedido via PIX
             </button>
         </div>
         {% endif %}
     </form>
+
+
+    <p class="section-title" style="margin-top: 32px;">Avaliações</p>
+
+    {% if avaliacoes %}
+    <div class="rating-summary">
+        <div class="rating-big">
+            <div class="rating-number">{{ media_nota or '—' }}</div>
+            <div class="stars-display">
+                {% for i in range(1, 6) %}
+                    {% if media_nota and i <= media_nota|int %}
+                        <i class="fa-solid fa-star star-icon filled"></i>
+                    {% elif media_nota and i <= (media_nota + 0.5)|int %}
+                        <i class="fa-solid fa-star-half-stroke star-icon filled"></i>
+                    {% else %}
+                        <i class="fa-regular fa-star star-icon empty"></i>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <div class="rating-count">{{ avaliacoes|length }} avaliações</div>
+        </div>
+        <div class="rating-bars">
+            {% for i in range(5, 0, -1) %}
+            <div class="rating-bar-row">
+                <span class="rating-bar-label">{{ i }}</span>
+                <div class="rating-bar-track">
+                    <div class="rating-bar-fill"
+                         style="width: {% if distribuicao %}{{ ((distribuicao.get(i, 0) / avaliacoes|length) * 100)|int }}{% else %}0{% endif %}%">
+                    </div>
+                </div>
+                <span class="rating-bar-count">{% if distribuicao %}{{ distribuicao.get(i, 0) }}{% else %}0{% endif %}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if current_user.is_authenticated and current_user.id != barraca.id %}
+        {% if ja_avaliou %}
+        <div class="ja-avaliou">
+            <i class="fa-solid fa-circle-check"></i>
+            Você já avaliou esta barraca. Obrigado pelo feedback!
+        </div>
+        {% else %}
+        <div class="avaliacao-form-card">
+            <div class="avaliacao-form-header">
+                <i class="fa-solid fa-star" style="color:var(--gold);"></i> Avaliar esta barraca
+            </div>
+            <div class="avaliacao-form-body">
+                <form method="POST">
+                    <div class="star-picker">
+                        {% for i in range(5, 0, -1) %}
+                        <input type="radio" name="nota" id="star{{ i }}" value="{{ i }}" required>
+                        <label for="star{{ i }}">★</label>
+                        {% endfor %}
+                    </div>
+                    <textarea class="comentario-input" name="comentario" placeholder="Deixe um comentário sobre sua experiência (opcional)..."></textarea>
+                    <button type="submit" class="btn-avaliar">
+                        <i class="fa-solid fa-paper-plane"></i> Enviar Avaliação
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+
+    {% if avaliacoes %}
+        {% for av in avaliacoes %}
+        <div class="avaliacao-card {% if av.fixado %}fixado{% endif %}">
+            {% if av.fixado %}
+            <div class="fixado-badge"><i class="fa-solid fa-thumbtack"></i> Fixado</div>
+            {% endif %}
+
+            <div class="avaliacao-top">
+                <div class="avaliacao-avatar">
+                    {% if av.autor.foto_perfil %}
+                        <img src="{{ av.autor.foto_perfil }}" alt="foto">
+                    {% else %}
+                        {{ av.autor.username[0].upper() }}
+                    {% endif %}
+                </div>
+                <div class="avaliacao-info">
+                    <div class="avaliacao-autor">{{ av.autor.username }}</div>
+                    <div class="avaliacao-data">
+                        {{ av.data_hora.strftime('%d/%m/%Y às %H:%M') if av.data_hora else '' }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="avaliacao-stars">
+                {% for i in range(1, 6) %}
+                    {% if i <= av.nota %}
+                        <i class="fa-solid fa-star filled"></i>
+                    {% else %}
+                        <i class="fa-regular fa-star empty"></i>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {% if av.comentario %}
+            <div class="avaliacao-comentario">{{ av.comentario }}</div>
+            {% endif %}
+
+            {% set is_dono = current_user.is_authenticated and current_user.id == barraca.id %}
+            {% set is_autor = current_user.is_authenticated and current_user.id == av.autor_id %}
+            {% if is_dono or is_autor or (current_user.is_authenticated and current_user.is_admin) %}
+            <div class="avaliacao-actions">
+                {% if is_dono or (current_user.is_authenticated and current_user.is_admin) %}
+                    {% if av.fixado %}
+                    <a href="{{ url_for('fixar_avaliacao', id=av.id) }}" class="btn-acao-av btn-desfixar">
+                        <i class="fa-solid fa-thumbtack-slash"></i> Desfixar
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('fixar_avaliacao', id=av.id) }}" class="btn-acao-av btn-fixar">
+                        <i class="fa-solid fa-thumbtack"></i> Fixar
+                    </a>
+                    {% endif %}
+                {% endif %}
+
+                {% if is_autor or (current_user.is_authenticated and current_user.is_admin) %}
+                <a href="{{ url_for('deletar_avaliacao', id=av.id) }}" class="btn-acao-av btn-deletar-av" onclick="return confirm('Remover esta avaliação?')">
+                    <i class="fa-solid fa-trash"></i> Remover
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="empty-state" style="margin-bottom: 20px;">
+        <i class="fa-regular fa-star" style="font-size: 24px; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
+        Nenhuma avaliação ainda.
+    </div>
+    {% endif %}
 
 </div>
 
