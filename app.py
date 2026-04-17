@@ -107,6 +107,7 @@ class Avaliacao(db.Model):
     data_hora = db.Column(db.DateTime, default=db.func.current_timestamp())
     autor_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     barraca_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    fixado = db.Column(db.Boolean, default=False)
     autor = db.relationship('Usuario', foreign_keys=[autor_id], backref='avaliacoes_feitas')
     barraca = db.relationship('Usuario', foreign_keys=[barraca_id], backref='avaliacoes_recebidas')
 
@@ -395,7 +396,6 @@ def index():
 def ver_barraca(usuario_id):
     barraca = Usuario.query.get_or_404(usuario_id)
     produtos = Produto.query.filter_by(usuario_id=usuario_id).all()
-    avaliacoes = Avaliacao.query.filter_by(barraca_id=usuario_id).order_by(Avaliacao.data_hora.desc()).all()
     media_nota = db.session.query(func.avg(Avaliacao.nota)).filter_by(barraca_id=usuario_id).scalar()
     media_nota = round(media_nota, 1) if media_nota else None
 
@@ -454,23 +454,37 @@ def ver_barraca(usuario_id):
         else:
             flash("Selecione a quantidade de pelo menos um produto!", "erro")
 
-    return render_template("ver_barraca.html", barraca=barraca, produtos=produtos,
-                           avaliacoes=avaliacoes, media_nota=media_nota)
+    # --- NOVA LÓGICA DE AVALIAÇÕES SOLICITADA ---
+    avaliacoes_fixadas = Avaliacao.query.filter_by(
+        barraca_id=usuario_id, fixado=True
+    ).order_by(Avaliacao.data_hora.desc()).all()
 
-@app.route("/deletar_avaliacao/<int:id>")
-@login_required
-def deletar_avaliacao(id):
-    av = Avaliacao.query.get_or_404(id)
-    if av.autor_id == current_user.id or current_user.is_admin:
-        barraca_id = av.barraca_id
-        db.session.delete(av)
-        db.session.commit()
-        flash("Avaliação removida.", "sucesso")
-    else:
-        flash("Acesso negado.", "erro")
-        barraca_id = av.barraca_id
-    return redirect(url_for('ver_barraca', usuario_id=barraca_id))
+    avaliacoes_normais = Avaliacao.query.filter_by(
+        barraca_id=usuario_id, fixado=False
+    ).order_by(Avaliacao.data_hora.desc()).all()
 
+    avaliacoes = avaliacoes_fixadas + avaliacoes_normais
+
+    ja_avaliou = False
+    if current_user.is_authenticated:
+        ja_avaliou = Avaliacao.query.filter_by(
+            autor_id=current_user.id, barraca_id=usuario_id
+        ).first() is not None
+
+    distribuicao = {}
+    for i in range(1, 6):
+        distribuicao[i] = Avaliacao.query.filter_by(
+            barraca_id=usuario_id, nota=i
+        ).count()
+
+    return render_template("ver_barraca.html",
+                           barraca=barraca,
+                           produtos=produtos,
+                           avaliacoes=avaliacoes,
+                           media_nota=media_nota,
+                           ja_avaliou=ja_avaliou,
+                           distribuicao=distribuicao,
+                           total_avaliacoes=len(avaliacoes))
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -882,7 +896,18 @@ def restaurar_backup():
         flash(f"Erro ao restaurar backup: {str(e)}", "erro")
 
     return redirect(url_for('admin_panel'))
-
+@app.route("/fixar_avaliacao/<int:id>")
+@login_required
+def fixar_avaliacao(id):
+    av = Avaliacao.query.get_or_404(id)
+    if current_user.id == av.barraca_id or current_user.is_admin:
+        av.fixado = not av.fixado
+        db.session.commit()
+        acao = "fixado" if av.fixado else "desfixado"
+        flash(f"Comentário {acao} com sucesso!", "sucesso")
+    else:
+        flash("Acesso negado.", "erro")
+    return redirect(url_for('ver_barraca', usuario_id=av.barraca_id))
 # --- HEALTH CHECK ---
 @app.route('/health')
 def health():
