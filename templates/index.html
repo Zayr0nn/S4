@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SalesHub</title>
+    <title>SalesHub — Feira 2026</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -15,14 +16,15 @@
             --border2: rgba(255,255,255,0.12);
             --accent: #7c6ef7;
             --accent2: #5b4fd4;
+            --accent-dim: rgba(124,110,247,0.12);
             --green: #22c55e;
             --green-dim: rgba(34,197,94,0.12);
             --gold: #f59e0b;
             --gold-dim: rgba(245,158,11,0.12);
+            --danger: #ef4444;
             --text: #f1f0ff;
             --muted: #6e6a8a;
             --muted2: #9e9bb8;
-            --danger: #ef4444;
         }
 
         body {
@@ -30,29 +32,23 @@
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
-            padding-bottom: 30px;
+            padding-bottom: 40px;
         }
 
         /* ── HEADER ── */
         .header {
             background: var(--surface);
             border-bottom: 1px solid var(--border);
-            padding: 18px 20px 16px;
+            padding: 16px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
-            top: 0;
-            z-index: 100;
+            top: 0; z-index: 100;
             backdrop-filter: blur(20px);
         }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-        }
+        .logo { display: flex; align-items: center; gap: 10px; }
 
         .logo-icon {
             width: 34px; height: 34px;
@@ -62,330 +58,401 @@
         }
 
         .logo-icon svg { width: 18px; height: 18px; }
+        .logo-text { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
 
-        .logo-text {
-            font-size: 17px;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-            color: var(--text);
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 13px;
-        }
+        .header-right { display: flex; align-items: center; gap: 12px; font-size: 13px; }
 
         .user-pill {
             background: var(--surface2);
             border: 1px solid var(--border2);
             border-radius: 20px;
             padding: 6px 12px;
-            font-size: 13px;
-            color: var(--muted2);
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            font-size: 13px; color: var(--muted2);
+            display: flex; align-items: center; gap: 6px;
             text-decoration: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.15s, color 0.15s;
         }
 
-        .user-pill:hover { border-color: var(--accent); }
+        .user-pill:hover { border-color: var(--accent); color: var(--text); }
 
-        .dot-online {
-            width: 7px; height: 7px;
-            background: var(--green);
-            border-radius: 50%;
+        .user-avatar-mini {
+            width: 22px; height: 22px;
+            border-radius: 50%; object-fit: cover;
         }
 
+        .dot-online { width: 7px; height: 7px; background: var(--green); border-radius: 50%; }
         .link-danger { color: var(--danger); text-decoration: none; font-size: 13px; font-weight: 600; }
         .link-accent { color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 600; }
 
+        /* ── WRAPPER ── */
+        .wrapper { max-width: 480px; margin: 0 auto; padding: 0 20px; }
+
         /* ── HERO ── */
-        .hero {
-            padding: 28px 20px 0;
-            max-width: 480px;
-            margin: 0 auto;
-        }
+        .hero { padding: 26px 0 0; margin-bottom: 20px; }
 
         .hero-greeting {
-            font-size: 13px;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            font-weight: 600;
-            margin-bottom: 6px;
+            font-size: 12px; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            font-weight: 700; margin-bottom: 5px;
         }
 
         .hero-title {
-            font-size: 26px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            color: var(--text);
-            line-height: 1.2;
+            font-size: 26px; font-weight: 800;
+            letter-spacing: -0.5px; color: var(--text); line-height: 1.15;
         }
 
         .hero-title span { color: var(--accent); }
 
         /* ── QUICK ACTIONS ── */
         .actions-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            padding: 20px 20px 0;
-            max-width: 480px;
-            margin: 0 auto;
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 10px; margin-bottom: 24px;
         }
 
         .action-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 14px;
-            border-radius: 14px;
-            font-size: 14px;
-            font-weight: 700;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            transition: opacity 0.15s, transform 0.15s;
+            display: flex; align-items: center; justify-content: center;
+            gap: 7px; padding: 13px;
+            border-radius: 14px; font-size: 14px; font-weight: 700;
+            text-decoration: none; border: none; cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
         }
 
         .action-btn:active { transform: scale(0.97); opacity: 0.85; }
-
         .action-primary { background: var(--accent); color: #fff; }
-
-        .action-secondary {
-            background: var(--surface2);
-            color: var(--text);
-            border: 1px solid var(--border2);
-        }
-
+        .action-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
         .action-full { grid-column: span 2; }
 
-        /* ── SECTION ── */
-        .section {
-            padding: 24px 20px 0;
-            max-width: 480px;
-            margin: 0 auto;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 14px;
-        }
-
+        /* ── SECTION TITLE ── */
         .section-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
         }
 
         /* ── RANKING ── */
         .ranking-card {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 18px;
-            overflow: hidden;
+            border-radius: 18px; overflow: hidden; margin-bottom: 24px;
         }
 
         .ranking-header {
-            padding: 16px 18px 12px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            padding: 14px 18px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 8px;
         }
 
         .trophy-badge {
             background: var(--gold-dim);
             border: 1px solid rgba(245,158,11,0.2);
-            border-radius: 8px;
-            padding: 5px 8px;
-            font-size: 14px;
+            border-radius: 8px; padding: 5px 8px; font-size: 14px;
         }
 
-        .ranking-header-text {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--text);
-        }
+        .ranking-header-text { font-size: 14px; font-weight: 700; color: var(--text); }
 
         .ranking-item {
-            display: flex;
-            align-items: center;
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center;
+            padding: 13px 18px; border-bottom: 1px solid var(--border);
             transition: background 0.15s;
-            text-decoration: none;
         }
 
         .ranking-item:last-child { border-bottom: none; }
         .ranking-item:hover { background: var(--surface2); }
 
-        .rank-medal {
-            font-size: 18px;
-            width: 32px;
-            text-align: center;
-            flex-shrink: 0;
-        }
+        .rank-medal { font-size: 18px; width: 30px; text-align: center; flex-shrink: 0; }
 
         .rank-avatar {
-            width: 36px; height: 36px;
-            border-radius: 10px;
-            background: var(--surface2);
-            border: 1px solid var(--border2);
+            width: 34px; height: 34px; border-radius: 10px;
+            background: var(--surface2); border: 1px solid var(--border2);
             display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 700;
-            color: var(--accent);
-            margin-right: 12px;
-            flex-shrink: 0;
+            font-size: 13px; font-weight: 700; color: var(--accent);
+            margin-right: 12px; flex-shrink: 0; overflow: hidden;
         }
 
+        .rank-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .rank-info { flex: 1; min-width: 0; }
         .rank-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .rank-turma { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-        .rank-value {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--green);
-            flex-shrink: 0;
-        }
+        .rank-value { font-size: 14px; font-weight: 700; color: var(--green); flex-shrink: 0; }
 
         .empty-state {
-            text-align: center;
-            padding: 30px 20px;
-            color: var(--muted);
-            font-size: 13px;
+            text-align: center; padding: 28px 20px;
+            color: var(--muted); font-size: 13px;
         }
 
-        /* ── BARRACAS ── */
+        /* ══════════════════════════════════════════════
+           ── BARRACAS EM DESTAQUE (PATROCINADAS) ──
+        ══════════════════════════════════════════════ */
+
+        .destaque-scroll {
+            display: flex;
+            gap: 14px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 4px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .destaque-scroll::-webkit-scrollbar { display: none; }
+
+        .destaque-card {
+            flex-shrink: 0;
+            width: 260px;
+            background: var(--surface);
+            border: 1.5px solid rgba(245,158,11,0.35);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            transition: border-color 0.15s;
+        }
+
+        .destaque-card:hover { border-color: rgba(245,158,11,0.6); }
+
+        /* Banner do estande */
+        .destaque-banner {
+            width: 100%; height: 110px;
+            object-fit: cover; display: block;
+        }
+
+        .destaque-banner-placeholder {
+            width: 100%; height: 110px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; font-weight: 900;
+            color: rgba(255,255,255,0.2);
+        }
+
+        /* Badge PATROCINADO */
+        .sponsored-badge {
+            position: absolute;
+            top: 10px; left: 10px;
+            background: rgba(245,158,11,0.92);
+            backdrop-filter: blur(8px);
+            color: #000;
+            font-size: 9px; font-weight: 900;
+            padding: 3px 8px; border-radius: 5px;
+            letter-spacing: 1px;
+            display: flex; align-items: center; gap: 4px;
+        }
+
+        .destaque-body { padding: 14px; }
+
+        .destaque-top {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+        }
+
+        .destaque-avatar {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px; font-weight: 800; color: #fff;
+            flex-shrink: 0; overflow: hidden;
+            border: 2px solid rgba(245,158,11,0.3);
+        }
+
+        .destaque-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .destaque-nome { font-size: 14px; font-weight: 800; color: var(--text); line-height: 1.2; }
+        .destaque-turma { font-size: 11px; color: var(--muted2); margin-top: 2px; }
+
+        .destaque-desc {
+            font-size: 12px; color: var(--muted2); line-height: 1.5;
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .destaque-footer {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        .destaque-stars {
+            display: flex; align-items: center; gap: 4px;
+            font-size: 12px; color: var(--gold);
+        }
+
+        .destaque-tag {
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 6px; padding: 3px 8px;
+            font-size: 10px; font-weight: 700; color: var(--accent);
+        }
+
+        .destaque-btn {
+            display: flex; align-items: center; justify-content: center;
+            gap: 5px; width: 100%; padding: 10px;
+            background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.08));
+            border: 1px solid rgba(245,158,11,0.25);
+            border-radius: 10px; color: var(--gold);
+            font-size: 13px; font-weight: 700;
+            text-decoration: none; margin-top: 10px;
+            transition: background 0.15s;
+        }
+
+        .destaque-btn:hover { background: rgba(245,158,11,0.2); }
+
+        /* ══════════════════════════════════════════════
+           ── BARRACAS NORMAIS ──
+        ══════════════════════════════════════════════ */
+
         .barraca-card {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 18px;
-            margin-bottom: 12px;
-            transition: border-color 0.15s;
+            border-radius: 18px; overflow: hidden;
+            margin-bottom: 12px; transition: border-color 0.15s;
         }
 
         .barraca-card:hover { border-color: var(--border2); }
 
+        /* Banner pequeno */
+        .barraca-banner {
+            width: 100%; height: 80px;
+            object-fit: cover; display: block;
+        }
+
+        .barraca-banner-placeholder {
+            width: 100%; height: 80px;
+            background: linear-gradient(135deg, var(--surface2), var(--surface));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; font-weight: 900; color: var(--border2);
+        }
+
+        .barraca-body { padding: 16px; }
+
         .barraca-top {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 14px;
+            display: flex; align-items: flex-start;
+            justify-content: space-between; margin-bottom: 12px;
         }
 
         .barraca-avatar {
-            width: 44px; height: 44px;
-            border-radius: 12px;
+            width: 42px; height: 42px; border-radius: 12px;
             background: linear-gradient(135deg, var(--accent), var(--accent2));
             display: flex; align-items: center; justify-content: center;
             font-size: 16px; font-weight: 800; color: #fff;
-            flex-shrink: 0;
-            margin-right: 12px;
+            flex-shrink: 0; margin-right: 12px; overflow: hidden;
         }
 
+        .barraca-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
         .barraca-info { flex: 1; }
-        .barraca-nome { font-size: 16px; font-weight: 700; color: var(--text); }
+        .barraca-nome { font-size: 15px; font-weight: 700; color: var(--text); }
         .barraca-sub { font-size: 12px; color: var(--muted2); margin-top: 3px; }
 
-        .tag {
-            background: var(--surface2);
-            border: 1px solid var(--border2);
-            border-radius: 8px;
-            padding: 4px 10px;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--accent);
-            flex-shrink: 0;
+        .barraca-tag {
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: 8px; padding: 3px 9px;
+            font-size: 11px; font-weight: 700; color: var(--accent); flex-shrink: 0;
+        }
+
+        .barraca-desc {
+            font-size: 13px; color: var(--muted2); line-height: 1.5;
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .barraca-footer {
+            display: flex; align-items: center;
+            justify-content: space-between; margin-bottom: 12px;
+        }
+
+        .barraca-stars {
+            display: flex; align-items: center; gap: 4px;
+            font-size: 12px; color: var(--gold);
         }
 
         .barraca-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            width: 100%;
-            padding: 13px;
-            background: var(--green-dim);
-            border: 1px solid rgba(34,197,94,0.2);
-            border-radius: 12px;
-            color: var(--green);
-            font-size: 14px;
-            font-weight: 700;
-            text-decoration: none;
-            transition: background 0.15s;
+            display: flex; align-items: center; justify-content: center;
+            gap: 6px; width: 100%; padding: 12px;
+            background: var(--green-dim); border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 12px; color: var(--green);
+            font-size: 14px; font-weight: 700;
+            text-decoration: none; transition: background 0.15s;
         }
 
         .barraca-btn:hover { background: rgba(34,197,94,0.2); }
 
-        /* ── MEMBROS NO CARD ── */
+        /* ── MEMBROS ── */
         .membros-section {
-            margin-top: 14px;
-            padding-top: 12px;
+            margin-top: 12px; padding-top: 10px;
             border-top: 1px dashed var(--border);
         }
 
         .membros-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 7px; display: flex; align-items: center; gap: 4px;
         }
 
-        .membros-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
+        .membros-list { display: flex; flex-wrap: wrap; gap: 6px; }
 
         .membro-tag {
-            background: var(--surface2);
-            border: 1px solid var(--border2);
-            border-radius: 20px;
-            padding: 4px 12px;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--muted2);
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: 20px; padding: 3px 10px;
+            font-size: 12px; font-weight: 500; color: var(--muted2);
+            display: inline-flex; align-items: center; gap: 4px;
             transition: all 0.15s;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            text-decoration: none;
         }
 
-        .membro-tag:hover {
-            background: var(--border2);
-            color: var(--text);
-            border-color: var(--accent);
+        .membro-tag:hover { background: var(--border2); color: var(--text); }
+        .coroa { color: var(--gold); font-size: 13px; }
+
+        /* ── PREMIUM CTA (para usuários sem premium) ── */
+        .premium-cta {
+            background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(124,110,247,0.08));
+            border: 1px solid rgba(245,158,11,0.2);
+            border-radius: 18px; padding: 20px;
+            margin-bottom: 24px;
+            display: flex; align-items: center; gap: 14px;
         }
 
-        .coroa {
-            color: var(--gold);
-            font-size: 14px;
-            margin-left: 2px;
+        .premium-cta-icon {
+            width: 46px; height: 46px;
+            background: var(--gold-dim);
+            border: 1px solid rgba(245,158,11,0.2);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
         }
+
+        .premium-cta-text { flex: 1; }
+        .premium-cta-title { font-size: 14px; font-weight: 800; color: var(--text); margin-bottom: 3px; }
+        .premium-cta-sub { font-size: 12px; color: var(--muted2); }
+
+        .premium-cta-btn {
+            background: var(--gold-dim);
+            border: 1px solid rgba(245,158,11,0.25);
+            border-radius: 10px; padding: 8px 14px;
+            color: var(--gold); font-size: 12px; font-weight: 800;
+            text-decoration: none; flex-shrink: 0;
+            transition: background 0.15s;
+        }
+
+        .premium-cta-btn:hover { background: rgba(245,158,11,0.2); }
+
+        /* ── DIVIDER ── */
+        .section-divider {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .section-divider-line { flex: 1; height: 1px; background: var(--border); }
+        .section-divider-text { font-size: 11px; color: var(--muted); font-weight: 600; }
     </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="header">
-    <a href="{{ url_for('index') }}" class="logo">
+    <div class="logo">
         <div class="logo-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
                 <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
@@ -393,11 +460,15 @@
             </svg>
         </div>
         <span class="logo-text">SalesHub</span>
-    </a>
+    </div>
     <div class="header-right">
         {% if current_user.is_authenticated %}
-            <a href="{{ url_for('perfil', usuario_id=current_user.id) }}" class="user-pill">
-                <div class="dot-online"></div>
+            <a href="{{ url_for('perfil') }}" class="user-pill">
+                {% if current_user.foto_perfil %}
+                    <img src="{{ current_user.foto_perfil }}" class="user-avatar-mini" alt="foto">
+                {% else %}
+                    <div class="dot-online"></div>
+                {% endif %}
                 {{ current_user.username }}
             </a>
             <a href="{{ url_for('logout') }}" class="link-danger">Sair</a>
@@ -407,103 +478,242 @@
     </div>
 </div>
 
-<div class="hero">
-    <p class="hero-greeting">Feira de Empreendedorismo</p>
-    <h1 class="hero-title">Bem-vindo à<br><span>Feira 2026</span></h1>
-</div>
+<div class="wrapper">
 
-{% if not current_user.is_authenticated %}
-<div class="actions-grid">
-    <a href="{{ url_for('cadastro') }}" class="action-btn action-primary action-full">
-        ＋ Criar Minha Conta
-    </a>
-</div>
-{% elif current_user.tipo == 'vendedor' or is_membro_ativo %}
-<div class="actions-grid">
-    <a href="{{ url_for('meus_produtos') }}" class="action-btn action-secondary">
-        ◈ Produtos
-    </a>
-    <a href="{{ url_for('dashboard') }}" class="action-btn action-primary">
-        ▤ Painel
-    </a>
-</div>
-{% endif %}
-
-<div class="section">
-    <div class="section-header">
-        <span class="section-title">Top 5 Faturamento</span>
+    <!-- HERO -->
+    <div class="hero">
+        <p class="hero-greeting">Feira de Empreendedorismo</p>
+        <h1 class="hero-title">Bem-vindo à<br><span>Feira 2026</span></h1>
     </div>
+
+    <!-- AÇÕES RÁPIDAS -->
+    {% if not current_user.is_authenticated %}
+    <div class="actions-grid">
+        <a href="{{ url_for('cadastro') }}" class="action-btn action-primary action-full">
+            <i class="fa-solid fa-plus"></i> Criar Minha Conta
+        </a>
+    </div>
+    {% elif current_user.tipo == 'vendedor' or is_membro_ativo %}
+    <div class="actions-grid">
+        <a href="{{ url_for('meus_produtos') }}" class="action-btn action-secondary">
+            <i class="fa-solid fa-box"></i> Produtos
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="action-btn action-primary">
+            <i class="fa-solid fa-chart-line"></i> Painel
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- CTA PREMIUM (só para vendedores sem premium) -->
+    {% if current_user.is_authenticated and current_user.tipo == 'vendedor' and not current_user.is_premium %}
+    <a href="{{ url_for('premium') }}" style="text-decoration:none;">
+        <div class="premium-cta">
+            <div class="premium-cta-icon">👑</div>
+            <div class="premium-cta-text">
+                <div class="premium-cta-title">Experimente o Premium</div>
+                <div class="premium-cta-sub">Gráficos, análises e relatório para o professor</div>
+            </div>
+            <span class="premium-cta-btn">Ver planos</span>
+        </div>
+    </a>
+    {% endif %}
+
+    <!-- RANKING -->
+    <p class="section-title">
+        <span>🏆</span> Top 5 Faturamento
+    </p>
     <div class="ranking-card">
         <div class="ranking-header">
             <div class="trophy-badge">🏆</div>
             <span class="ranking-header-text">Placar em Tempo Real</span>
         </div>
         {% for item in ranking %}
-        <a href="{{ url_for('perfil', usuario_id=item.id) }}" class="ranking-item">
+        <div class="ranking-item">
             <div class="rank-medal">
                 {% if loop.index == 1 %}🥇
                 {% elif loop.index == 2 %}🥈
                 {% elif loop.index == 3 %}🥉
                 {% else %}{{ loop.index }}º{% endif %}
             </div>
-            <div class="rank-avatar">{{ item.nome_barraca[0] }}</div>
+            <div class="rank-avatar">
+                {% set b = namespace(found=None) %}
+                {% for barraca in barracas %}
+                    {% if barraca.id == item.id %}{% set b.found = barraca %}{% endif %}
+                {% endfor %}
+                {% if b.found and b.found.foto_perfil %}
+                    <img src="{{ b.found.foto_perfil }}" alt="avatar">
+                {% else %}
+                    {{ item.nome_barraca[0] if item.nome_barraca else '?' }}
+                {% endif %}
+            </div>
             <div class="rank-info">
                 <div class="rank-name">{{ item.nome_barraca }}</div>
                 <div class="rank-turma">{{ item.turma }}</div>
             </div>
             <div class="rank-value">R$ {{ "%.2f"|format(item.total) }}</div>
-        </a>
+        </div>
         {% else %}
         <div class="empty-state">Aguardando primeiras vendas...</div>
         {% endfor %}
     </div>
-</div>
 
-<div class="section">
-    <div class="section-header">
-        <span class="section-title">Unidades da Feira</span>
+    <!-- ══ BARRACAS EM DESTAQUE ══ -->
+    {% if barracas_destaque %}
+    <p class="section-title">
+        <span style="color:var(--gold);">★</span> Em Destaque
+        <span style="font-size:10px;background:var(--gold-dim);color:var(--gold);
+                     padding:2px 7px;border-radius:4px;font-weight:800;
+                     letter-spacing:0.5px;">PATROCINADO</span>
+    </p>
+
+    <div class="destaque-scroll">
+        {% for barraca in barracas_destaque %}
+        {% set info = membros_por_barraca.get(barraca.id) %}
+
+        <!-- Calcula média de avaliações -->
+        {% set media = namespace(nota=None) %}
+
+        <div class="destaque-card">
+            <span class="sponsored-badge">
+                <i class="fa-solid fa-star" style="font-size:8px;"></i> PATROCINADO
+            </span>
+
+            {% if barraca.foto_estande %}
+                <img src="{{ barraca.foto_estande }}" class="destaque-banner" alt="Estande">
+            {% else %}
+                <div class="destaque-banner-placeholder">{{ barraca.nome_barraca[0] }}</div>
+            {% endif %}
+
+            <div class="destaque-body">
+                <div class="destaque-top">
+                    <div class="destaque-avatar">
+                        {% if barraca.foto_perfil %}
+                            <img src="{{ barraca.foto_perfil }}" alt="avatar">
+                        {% else %}
+                            {{ barraca.nome_barraca[0] }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="destaque-nome">{{ barraca.nome_barraca }}</div>
+                        <div class="destaque-turma">{{ barraca.turma }} · Prof. {{ barraca.professor_responsavel }}</div>
+                    </div>
+                </div>
+
+                {% if barraca.descricao %}
+                <div class="destaque-desc">{{ barraca.descricao }}</div>
+                {% else %}
+                <div class="destaque-desc" style="color:var(--muted);font-style:italic;">
+                    Conheça nosso cardápio!
+                </div>
+                {% endif %}
+
+                <div class="destaque-footer">
+                    <span class="destaque-tag">{{ barraca.turma }}</span>
+                    {% if info %}
+                    <span style="font-size:11px;color:var(--muted2);">
+                        <i class="fa-solid fa-users" style="font-size:10px;"></i>
+                        {{ info.membros|length + 1 }} pessoas
+                    </span>
+                    {% endif %}
+                </div>
+
+                <a href="{{ url_for('ver_barraca', usuario_id=barraca.id) }}" class="destaque-btn">
+                    <i class="fa-solid fa-utensils"></i> Ver Cardápio & Pagar
+                </a>
+            </div>
+        </div>
+        {% endfor %}
     </div>
+
+    <!-- DIVISOR -->
+    <div class="section-divider" style="margin-top:20px;margin-bottom:20px;">
+        <div class="section-divider-line"></div>
+        <span class="section-divider-text">Todas as Barracas</span>
+        <div class="section-divider-line"></div>
+    </div>
+    {% endif %}
+
+    <!-- ══ TODAS AS BARRACAS ══ -->
+    <p class="section-title">
+        <span>🏪</span> Unidades da Feira
+    </p>
 
     {% for barraca in barracas %}
+    {% if not barraca.is_destaque %}
+    {% set info = membros_por_barraca.get(barraca.id) %}
     <div class="barraca-card">
-        <div class="barraca-top">
-            <div class="barraca-avatar">{{ barraca.nome_barraca[0] }}</div>
-            <div class="barraca-info">
-                <div class="barraca-nome">{{ barraca.nome_barraca }}</div>
-                <div class="barraca-sub">Prof. {{ barraca.professor_responsavel }}</div>
-            </div>
-            <div class="tag">{{ barraca.turma }}</div>
-        </div>
 
-        {% set info = membros_por_barraca.get(barraca.id) %}
-        {% if info %}
-        <div class="membros-section">
-            <div class="membros-title">
-                <span>👥</span> Equipe ({{ info.membros|length + 1 }})
-            </div>
-            <div class="membros-list">
-                <a href="{{ url_for('perfil', usuario_id=info.lider.id) }}" class="membro-tag">
-                    {{ info.lider.username }}
-                    <span class="coroa" title="Líder da barraca">👑</span>
-                </a>
-                {% for membro in info.membros %}
-                <a href="{{ url_for('perfil', usuario_id=membro.id) }}" class="membro-tag">
-                    {{ membro.username }}
-                </a>
-                {% endfor %}
-            </div>
-        </div>
+        {% if barraca.foto_estande %}
+            <img src="{{ barraca.foto_estande }}" class="barraca-banner" alt="Estande">
+        {% else %}
+            <div class="barraca-banner-placeholder">{{ barraca.nome_barraca[0] }}</div>
         {% endif %}
 
-        <a href="{{ url_for('ver_barraca', usuario_id=barraca.id) }}" class="barraca-btn" style="margin-top: 14px;">
-            Ver Cardápio & Pagar
-        </a>
+        <div class="barraca-body">
+            <div class="barraca-top">
+                <div class="barraca-avatar">
+                    {% if barraca.foto_perfil %}
+                        <img src="{{ barraca.foto_perfil }}" alt="avatar">
+                    {% else %}
+                        {{ barraca.nome_barraca[0] }}
+                    {% endif %}
+                </div>
+                <div class="barraca-info">
+                    <div class="barraca-nome">{{ barraca.nome_barraca }}</div>
+                    <div class="barraca-sub">Prof. {{ barraca.professor_responsavel }}</div>
+                </div>
+                <div class="barraca-tag">{{ barraca.turma }}</div>
+            </div>
+
+            {% if barraca.descricao %}
+            <div class="barraca-desc">{{ barraca.descricao }}</div>
+            {% endif %}
+
+            <!-- MEMBROS -->
+            {% if info %}
+            <div class="membros-section">
+                <div class="membros-title">
+                    <i class="fa-solid fa-users" style="font-size:10px;"></i>
+                    Equipe ({{ info.membros|length + 1 }})
+                </div>
+                <div class="membros-list">
+                    <span class="membro-tag">
+                        {{ info.lider.username }}
+                        <span class="coroa" title="Líder">👑</span>
+                    </span>
+                    {% for membro in info.membros %}
+                    <span class="membro-tag">{{ membro.username }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <a href="{{ url_for('ver_barraca', usuario_id=barraca.id) }}" class="barraca-btn" style="margin-top:14px;">
+                <i class="fa-solid fa-utensils"></i> Ver Cardápio & Pagar
+            </a>
+        </div>
     </div>
+    {% endif %}
     {% else %}
-    <div class="empty-state" style="background: var(--surface); border-radius: 18px; border: 1px solid var(--border);">
+    {% if not barracas | selectattr('is_destaque', 'equalto', False) | list %}
+    <div class="empty-state" style="background:var(--surface);border:1px solid var(--border);border-radius:18px;">
         Nenhuma unidade ativa no momento.
     </div>
+    {% endif %}
     {% endfor %}
+
+    <!-- Se todas forem destaque, mostra mensagem -->
+    {% set normais = barracas | rejectattr('is_destaque') | list %}
+    {% if normais | length == 0 and barracas | length > 0 %}
+    <div class="empty-state" style="background:var(--surface);border:1px solid var(--border);border-radius:18px;margin-top:8px;">
+        Todas as barracas estão em destaque.
+    </div>
+    {% elif barracas | length == 0 %}
+    <div class="empty-state" style="background:var(--surface);border:1px solid var(--border);border-radius:18px;">
+        Nenhuma unidade ativa no momento.
+    </div>
+    {% endif %}
+
 </div>
 
 </body>
