@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Analytics Premium — {{ current_user.nome_barraca }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #13131a;
+            --surface2: #1c1c26;
+            --border: rgba(255,255,255,0.07);
+            --border2: rgba(255,255,255,0.12);
+            --accent: #7c6ef7;
+            --accent-dim: rgba(124,110,247,0.12);
+            --green: #22c55e;
+            --green-dim: rgba(34,197,94,0.12);
+            --gold: #f59e0b;
+            --gold-dim: rgba(245,158,11,0.10);
+            --danger: #ef4444;
+            --danger-dim: rgba(239,68,68,0.08);
+            --blue: #3b82f6;
+            --blue-dim: rgba(59,130,246,0.10);
+            --text: #f1f0ff;
+            --muted: #6e6a8a;
+            --muted2: #9e9bb8;
+        }
+
+        body {
+            font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0; z-index: 100;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 12px; }
+
+        .logo-icon {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--gold), #d97706);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: #000; font-size: 15px;
+        }
+
+        .logo-text { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+
+        .premium-badge {
+            background: linear-gradient(135deg, var(--gold), #d97706);
+            color: #000;
+            font-size: 10px; font-weight: 800;
+            padding: 3px 8px; border-radius: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-right { display: flex; align-items: center; gap: 10px; }
+
+        .btn-back {
+            display: flex; align-items: center; gap: 6px;
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: 10px; padding: 7px 13px;
+            font-size: 13px; font-weight: 600; color: var(--muted2);
+            text-decoration: none; transition: color 0.15s;
+        }
+        .btn-back:hover { color: var(--text); }
+
+        .btn-relatorio {
+            display: flex; align-items: center; gap: 6px;
+            background: var(--accent-dim); border: 1px solid rgba(124,110,247,0.25);
+            border-radius: 10px; padding: 7px 13px;
+            font-size: 13px; font-weight: 700; color: var(--accent);
+            text-decoration: none; transition: background 0.15s;
+        }
+        .btn-relatorio:hover { background: rgba(124,110,247,0.2); }
+
+        /* ── WRAPPER ── */
+        .wrapper { max-width: 900px; margin: 0 auto; padding: 24px 20px 0; }
+
+        /* ── HERO METRICS ── */
+        .hero-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        @media (min-width: 600px) {
+            .hero-metrics { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        .metric-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 18px 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: -20px; right: -20px;
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            opacity: 0.08;
+        }
+
+        .metric-card.receita::before { background: var(--green); }
+        .metric-card.lucro::before { background: var(--accent); }
+        .metric-card.ticket::before { background: var(--gold); }
+        .metric-card.vendas::before { background: var(--blue); }
+
+        .metric-icon {
+            width: 34px; height: 34px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px;
+            margin-bottom: 12px;
+        }
+
+        .metric-card.receita .metric-icon { background: var(--green-dim); color: var(--green); }
+        .metric-card.lucro .metric-icon { background: var(--accent-dim); color: var(--accent); }
+        .metric-card.ticket .metric-icon { background: var(--gold-dim); color: var(--gold); }
+        .metric-card.vendas .metric-icon { background: var(--blue-dim); color: var(--blue); }
+
+        .metric-label {
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 22px; font-weight: 900;
+            letter-spacing: -0.5px; color: var(--text);
+        }
+
+        .metric-card.receita .metric-value { color: var(--green); }
+        .metric-card.lucro .metric-value { color: var(--accent); }
+        .metric-card.ticket .metric-value { color: var(--gold); }
+        .metric-card.vendas .metric-value { color: var(--blue); }
+
+        .metric-sub {
+            font-size: 11px; color: var(--muted2); margin-top: 4px;
+        }
+
+        /* ── LUCRO INDICATOR ── */
+        .lucro-indicator {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .lucro-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 16px;
+        }
+
+        .lucro-title {
+            font-size: 13px; font-weight: 700; color: var(--text);
+        }
+
+        .lucro-subtitle { font-size: 11px; color: var(--muted2); margin-top: 2px; }
+
+        .lucro-values {
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px; margin-bottom: 14px;
+        }
+
+        .lucro-item { text-align: center; }
+
+        .lucro-item-label {
+            font-size: 10px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
+        }
+
+        .lucro-item-value { font-size: 18px; font-weight: 800; }
+        .lucro-item-value.receita { color: var(--green); }
+        .lucro-item-value.custo { color: var(--danger); }
+        .lucro-item-value.lucro { color: var(--accent); }
+
+        .lucro-bar-track {
+            width: 100%; height: 8px;
+            background: var(--surface2);
+            border-radius: 4px; overflow: hidden;
+            position: relative;
+        }
+
+        .lucro-bar-fill {
+            height: 100%; border-radius: 4px;
+            background: linear-gradient(to right, var(--green), var(--accent));
+            transition: width 1s ease;
+        }
+
+        .lucro-bar-cost {
+            position: absolute; top: 0; left: 0;
+            height: 100%; border-radius: 4px;
+            background: rgba(239,68,68,0.4);
+        }
+
+        .lucro-legend {
+            display: flex; gap: 16px; margin-top: 8px; font-size: 11px; color: var(--muted2);
+        }
+
+        .lucro-legend span {
+            display: flex; align-items: center; gap: 5px;
+        }
+
+        .legend-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+        }
+
+        /* ── CHARTS GRID ── */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        @media (min-width: 700px) {
+            .charts-grid { grid-template-columns: 1fr 1fr; }
+            .charts-grid .chart-full { grid-column: span 2; }
+        }
+
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .chart-header {
+            display: flex; justify-content: space-between;
+            align-items: flex-start; margin-bottom: 18px;
+        }
+
+        .chart-title { font-size: 13px; font-weight: 700; color: var(--text); }
+        .chart-sub { font-size: 11px; color: var(--muted2); margin-top: 2px; }
+
+        .chart-badge {
+            font-size: 10px; font-weight: 700; padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .chart-badge.green { background: var(--green-dim); color: var(--green); }
+        .chart-badge.gold { background: var(--gold-dim); color: var(--gold); }
+        .chart-badge.accent { background: var(--accent-dim); color: var(--accent); }
+
+        .chart-wrap {
+            position: relative;
+            height: 200px;
+        }
+
+        .chart-wrap.tall { height: 260px; }
+
+        /* ── TOP PRODUTOS ── */
+        .produto-rank {
+            display: flex; align-items: center;
+            gap: 12px; padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .produto-rank:last-child { border-bottom: none; }
+
+        .rank-pos {
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            background: var(--surface2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 800; color: var(--muted2);
+            flex-shrink: 0;
+        }
+
+        .rank-pos.gold { background: var(--gold-dim); color: var(--gold); }
+        .rank-pos.silver { background: rgba(148,163,184,0.1); color: #94a3b8; }
+        .rank-pos.bronze { background: rgba(180,120,60,0.1); color: #b4783c; }
+
+        .rank-info { flex: 1; min-width: 0; }
+        .rank-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rank-qtd { font-size: 11px; color: var(--muted2); margin-top: 2px; }
+
+        .rank-bar-wrap { width: 80px; }
+        .rank-bar { height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
+        .rank-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+        .rank-valor { font-size: 12px; font-weight: 700; color: var(--green); text-align: right; }
+
+        /* ── SEÇÃO TITLE ── */
+        .section-title {
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 14px;
+        }
+
+        /* ── INSIGHTS ── */
+        .insights-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        @media (min-width: 600px) {
+            .insights-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        .insight-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 18px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .insight-icon {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+
+        .insight-icon.green { background: var(--green-dim); color: var(--green); }
+        .insight-icon.gold { background: var(--gold-dim); color: var(--gold); }
+        .insight-icon.accent { background: var(--accent-dim); color: var(--accent); }
+        .insight-icon.danger { background: var(--danger-dim); color: var(--danger); }
+
+        .insight-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+        .insight-text { font-size: 12px; color: var(--muted2); line-height: 1.5; }
+
+        /* ── BLOQUEIO PREMIUM ── */
+        .premium-lock {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .lock-icon {
+            width: 70px; height: 70px;
+            background: var(--gold-dim);
+            border: 1px solid rgba(245,158,11,0.2);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .lock-title {
+            font-size: 22px; font-weight: 800; color: var(--text);
+            letter-spacing: -0.3px; margin-bottom: 10px;
+        }
+
+        .lock-desc { font-size: 14px; color: var(--muted2); line-height: 1.6; max-width: 380px; }
+
+        .lock-features {
+            display: flex; flex-direction: column; gap: 10px;
+            margin: 24px 0; text-align: left; max-width: 320px; width: 100%;
+        }
+
+        .lock-feature {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 14px; color: var(--muted2);
+        }
+
+        .lock-feature i { color: var(--gold); font-size: 14px; width: 16px; }
+
+        .btn-upgrade {
+            background: linear-gradient(135deg, var(--gold), #d97706);
+            color: #000; font-size: 15px; font-weight: 800;
+            padding: 14px 32px; border-radius: 14px; border: none;
+            cursor: pointer; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="header-left">
+        <div class="logo-icon"><i class="fa-solid fa-crown"></i></div>
+        <div>
+            <span class="logo-text">Analytics</span>
+            <span class="premium-badge">PREMIUM</span>
+        </div>
+    </div>
+    <div class="header-right">
+        {% if current_user.is_premium %}
+        <a href="{{ url_for('relatorio') }}" class="btn-relatorio">
+            <i class="fa-solid fa-file-pdf"></i> Relatório
+        </a>
+        {% endif %}
+        <a href="{{ url_for('dashboard') }}" class="btn-back">← Painel</a>
+    </div>
+</div>
+
+<div class="wrapper">
+
+{% if not current_user.is_premium %}
+<!-- ── TELA DE BLOQUEIO ── -->
+<div class="premium-lock">
+    <div class="lock-icon">👑</div>
+    <h1 class="lock-title">SalesHub Premium</h1>
+    <p class="lock-desc">
+        Desbloqueie análises avançadas, relatórios para o professor e
+        controle total do desempenho da sua barraca.
+    </p>
+    <div class="lock-features">
+        <div class="lock-feature"><i class="fa-solid fa-chart-line"></i> Gráficos de vendas por hora e por dia</div>
+        <div class="lock-feature"><i class="fa-solid fa-trophy"></i> Ranking de produtos mais vendidos</div>
+        <div class="lock-feature"><i class="fa-solid fa-scale-balanced"></i> Análise de lucro real (receita − custo)</div>
+        <div class="lock-feature"><i class="fa-solid fa-file-lines"></i> Relatório pronto para imprimir ao professor</div>
+        <div class="lock-feature"><i class="fa-solid fa-lightbulb"></i> Insights automáticos de desempenho</div>
+        <div class="lock-feature"><i class="fa-solid fa-clock"></i> Horário de pico de vendas</div>
+    </div>
+    <p style="font-size:13px;color:var(--muted2);margin-bottom:20px;">
+        Entre em contato com o administrador para ativar o Premium.
+    </p>
+    <a href="{{ url_for('dashboard') }}" class="btn-upgrade">
+        <i class="fa-solid fa-crown"></i> Quero o Premium
+    </a>
+</div>
+
+{% else %}
+<!-- ── DASHBOARD PREMIUM ── -->
+
+<!-- MÉTRICAS PRINCIPAIS -->
+<div class="hero-metrics">
+    <div class="metric-card receita">
+        <div class="metric-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+        <div class="metric-label">Receita Total</div>
+        <div class="metric-value">R$ {{ "%.2f"|format(receita_total) }}</div>
+        <div class="metric-sub">{{ total_vendas }} venda{{ 's' if total_vendas != 1 }}</div>
+    </div>
+    <div class="metric-card lucro">
+        <div class="metric-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+        <div class="metric-label">Lucro Estimado</div>
+        <div class="metric-value">R$ {{ "%.2f"|format(lucro) }}</div>
+        <div class="metric-sub">Após custos declarados</div>
+    </div>
+    <div class="metric-card ticket">
+        <div class="metric-icon"><i class="fa-solid fa-receipt"></i></div>
+        <div class="metric-label">Ticket Médio</div>
+        <div class="metric-value">R$ {{ "%.2f"|format(ticket_medio) }}</div>
+        <div class="metric-sub">Por pedido confirmado</div>
+    </div>
+    <div class="metric-card vendas">
+        <div class="metric-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+        <div class="metric-label">Itens Vendidos</div>
+        <div class="metric-value">{{ total_itens }}</div>
+        <div class="metric-sub">{{ total_produtos }} produto{{ 's' if total_produtos != 1 }} no cardápio</div>
+    </div>
+</div>
+
+<!-- ANÁLISE DE LUCRO -->
+<div class="lucro-indicator">
+    <div class="lucro-header">
+        <div>
+            <div class="lucro-title">Análise de Resultado</div>
+            <div class="lucro-subtitle">Receita vs Custo Operacional declarado</div>
+        </div>
+        {% if margem > 0 %}
+        <span style="font-size:13px;font-weight:800;color:var(--green);">
+            +{{ "%.1f"|format(margem) }}% margem
+        </span>
+        {% else %}
+        <span style="font-size:13px;font-weight:800;color:var(--danger);">
+            {{ "%.1f"|format(margem) }}% margem
+        </span>
+        {% endif %}
+    </div>
+    <div class="lucro-values">
+        <div class="lucro-item">
+            <div class="lucro-item-label">Receita</div>
+            <div class="lucro-item-value receita">R$ {{ "%.2f"|format(receita_total) }}</div>
+        </div>
+        <div class="lucro-item">
+            <div class="lucro-item-label">Custo</div>
+            <div class="lucro-item-value custo">R$ {{ "%.2f"|format(custo) }}</div>
+        </div>
+        <div class="lucro-item">
+            <div class="lucro-item-label">Lucro</div>
+            <div class="lucro-item-value lucro">R$ {{ "%.2f"|format(lucro) }}</div>
+        </div>
+    </div>
+    <div class="lucro-bar-track">
+        {% if receita_total > 0 %}
+        <div class="lucro-bar-fill" style="width: {{ [((receita_total - custo) / receita_total * 100)|int, 0]|max }}%"></div>
+        <div class="lucro-bar-cost" style="width: {{ [((custo / receita_total) * 100)|int, 100]|min }}%"></div>
+        {% else %}
+        <div class="lucro-bar-fill" style="width: 0%"></div>
+        {% endif %}
+    </div>
+    <div class="lucro-legend">
+        <span><div class="legend-dot" style="background:var(--green);"></div> Lucro</span>
+        <span><div class="legend-dot" style="background:rgba(239,68,68,0.5);"></div> Custo</span>
+        <span style="margin-left:auto;color:var(--muted);">
+            Custo calculado automaticamente pelos itens vendidos
+        </span>
+    </div>
+        </span>
+    </div>
+</div>
+
+<!-- GRÁFICOS -->
+<div class="charts-grid">
+
+    <!-- TENDÊNCIA DE VENDAS (FULL WIDTH) -->
+    <div class="chart-card chart-full">
+        <div class="chart-header">
+            <div>
+                <div class="chart-title">Tendência de Vendas</div>
+                <div class="chart-sub">Receita acumulada ao longo do tempo</div>
+            </div>
+            <span class="chart-badge green">Tempo Real</span>
+        </div>
+        <div class="chart-wrap tall">
+            <canvas id="tendenciaChart"></canvas>
+        </div>
+    </div>
+
+    <!-- VENDAS POR HORA -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div>
+                <div class="chart-title">Horário de Pico</div>
+                <div class="chart-sub">Pedidos confirmados por hora</div>
+            </div>
+            <span class="chart-badge gold">{{ hora_pico }}h</span>
+        </div>
+        <div class="chart-wrap">
+            <canvas id="horaChart"></canvas>
+        </div>
+    </div>
+
+    <!-- TOP PRODUTOS -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div>
+                <div class="chart-title">Produtos Mais Vendidos</div>
+                <div class="chart-sub">Por quantidade de itens</div>
+            </div>
+            <span class="chart-badge accent">Top {{ top_produtos|length }}</span>
+        </div>
+        {% for p in top_produtos %}
+        <div class="produto-rank">
+            <div class="rank-pos {{ 'gold' if loop.index == 1 else ('silver' if loop.index == 2 else ('bronze' if loop.index == 3 else '')) }}">
+                {{ loop.index }}
+            </div>
+            <div class="rank-info">
+                <div class="rank-name">{{ p.nome }}</div>
+                <div class="rank-qtd">{{ p.quantidade }} unidades vendidas</div>
+            </div>
+            <div class="rank-bar-wrap">
+                <div class="rank-bar">
+                    <div class="rank-bar-fill"
+                         style="width: {{ ((p.quantidade / top_produtos[0].quantidade) * 100)|int if top_produtos else 0 }}%">
+                    </div>
+                </div>
+                <div class="rank-valor">R$ {{ "%.2f"|format(p.receita) }}</div>
+            </div>
+        </div>
+        {% else %}
+        <p style="font-size:13px;color:var(--muted);text-align:center;padding:20px 0;">
+            Nenhum produto vendido ainda.
+        </p>
+        {% endfor %}
+    </div>
+
+    <!-- DISTRIBUIÇÃO DE VALORES -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div>
+                <div class="chart-title">Mix de Receita</div>
+                <div class="chart-sub">Participação por produto</div>
+            </div>
+        </div>
+        <div class="chart-wrap">
+            <canvas id="mixChart"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<!-- INSIGHTS AUTOMÁTICOS -->
+<p class="section-title">Insights Automáticos</p>
+<div class="insights-grid">
+
+    {% if lucro > 0 %}
+    <div class="insight-card">
+        <div class="insight-icon green"><i class="fa-solid fa-circle-check"></i></div>
+        <div>
+            <div class="insight-title">Operação Lucrativa</div>
+            <div class="insight-text">
+                Sua barraca está gerando lucro de R$ {{ "%.2f"|format(lucro) }},
+                com margem de {{ "%.1f"|format(margem) }}%.
+                {% if margem > 30 %}Excelente desempenho!{% elif margem > 15 %}Resultado saudável.{% else %}Considere revisar custos.{% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="insight-card">
+        <div class="insight-icon danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div>
+            <div class="insight-title">Atenção ao Custo</div>
+            <div class="insight-text">
+                O custo declarado supera a receita. Verifique se o custo operacional
+                foi inserido corretamente em "Minha Barraca".
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if hora_pico %}
+    <div class="insight-card">
+        <div class="insight-icon gold"><i class="fa-solid fa-fire"></i></div>
+        <div>
+            <div class="insight-title">Horário de Pico: {{ hora_pico }}h</div>
+            <div class="insight-text">
+                A maior concentração de pedidos ocorre às {{ hora_pico }}h.
+                Garanta estoque e equipe disponíveis nesse horário.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if top_produtos %}
+    <div class="insight-card">
+        <div class="insight-icon accent"><i class="fa-solid fa-star"></i></div>
+        <div>
+            <div class="insight-title">Campeão de Vendas</div>
+            <div class="insight-text">
+                <strong style="color:var(--text);">{{ top_produtos[0].nome }}</strong>
+                é o produto mais vendido com {{ top_produtos[0].quantidade }} unidades,
+                representando
+                {% if total_itens > 0 %}
+                {{ "%.0f"|format((top_produtos[0].quantidade / total_itens) * 100) }}%
+                {% else %}0%{% endif %}
+                do volume total.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="insight-card">
+        <div class="insight-icon accent"><i class="fa-solid fa-calculator"></i></div>
+        <div>
+            <div class="insight-title">Custo por Venda</div>
+            <div class="insight-text">
+                {% if total_vendas > 0 %}
+                Cada venda custa em média
+                <strong style="color:var(--text);">R$ {{ "%.2f"|format(custo / total_vendas) }}</strong>
+                em operação e gera
+                <strong style="color:var(--green);">R$ {{ "%.2f"|format(ticket_medio) }}</strong>
+                de receita.
+                {% else %}
+                Nenhuma venda confirmada ainda para calcular custo por venda.
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endif %}{# fim is_premium #}
+
+</div>{# fim wrapper #}
+
+{% if current_user.is_premium %}
+<script>
+    // ── DADOS DO SERVIDOR ──
+    const tendenciaLabels = {{ tendencia_labels | tojson }};
+    const tendenciaData   = {{ tendencia_data | tojson }};
+    const horaLabels      = {{ hora_labels | tojson }};
+    const horaData        = {{ hora_data | tojson }};
+    const mixLabels       = {{ mix_labels | tojson }};
+    const mixData         = {{ mix_data | tojson }};
+
+    // ── CONFIGURAÇÃO PADRÃO ──
+    Chart.defaults.color = '#6e6a8a';
+    Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+    Chart.defaults.font.size = 11;
+
+    const gridColor = 'rgba(255,255,255,0.04)';
+    const tickColor = '#6e6a8a';
+
+    // ── 1. TENDÊNCIA ──
+    new Chart(document.getElementById('tendenciaChart'), {
+        type: 'line',
+        data: {
+            labels: tendenciaLabels,
+            datasets: [{
+                label: 'Receita (R$)',
+                data: tendenciaData,
+                borderColor: '#22c55e',
+                backgroundColor: 'rgba(34,197,94,0.08)',
+                borderWidth: 2,
+                pointRadius: 3,
+                pointBackgroundColor: '#22c55e',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: gridColor }, ticks: { color: tickColor, maxTicksLimit: 8 } },
+                y: { grid: { color: gridColor }, ticks: { color: tickColor, callback: v => 'R$'+v } }
+            }
+        }
+    });
+
+    // ── 2. HORA PICO ──
+    new Chart(document.getElementById('horaChart'), {
+        type: 'bar',
+        data: {
+            labels: horaLabels,
+            datasets: [{
+                data: horaData,
+                backgroundColor: horaData.map((v, i) =>
+                    v === Math.max(...horaData) ? '#f59e0b' : 'rgba(124,110,247,0.4)'
+                ),
+                borderRadius: 6,
+                barThickness: 14
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: tickColor } },
+                y: { grid: { color: gridColor }, ticks: { color: tickColor, stepSize: 1 } }
+            }
+        }
+    });
+
+    // ── 3. MIX DE RECEITA ──
+    const mixColors = [
+        '#7c6ef7','#22c55e','#f59e0b','#ef4444','#3b82f6',
+        '#ec4899','#10b981','#8b5cf6','#f97316','#06b6d4'
+    ];
+    new Chart(document.getElementById('mixChart'), {
+        type: 'doughnut',
+        data: {
+            labels: mixLabels,
+            datasets: [{
+                data: mixData,
+                backgroundColor: mixColors.slice(0, mixData.length),
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#9e9bb8', font: { size: 11 }, padding: 12, boxWidth: 10 }
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+
+</body>
+</html>
