@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Admin - SalesHub</title>
-    
+    <title>Admin Central — SalesHub</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -18,475 +16,525 @@
             --border: rgba(255,255,255,0.07);
             --border2: rgba(255,255,255,0.12);
             --accent: #7c6ef7;
-            --accent-dim: rgba(124, 110, 247, 0.15);
+            --accent-dim: rgba(124,110,247,0.15);
             --green: #22c55e;
             --green-dim: rgba(34,197,94,0.12);
+            --gold: #f59e0b;
+            --gold-dim: rgba(245,158,11,0.12);
             --danger: #ef4444;
-            --danger-dim: rgba(239, 68, 68, 0.15);
+            --danger-dim: rgba(239,68,68,0.12);
             --text: #f1f0ff;
             --muted: #6e6a8a;
             --muted2: #9e9bb8;
         }
 
         body {
-            font-family: 'Inter', system-ui, sans-serif;
+            font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
             background: var(--bg);
             color: var(--text);
-            line-height: 1.5;
+            min-height: 100vh;
+            padding-bottom: 40px;
         }
 
-        /* ── NAVBAR ── */
-        .navbar {
+        .header {
             background: var(--surface);
-            padding: 15px 20px;
             border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0; z-index: 1000;
-            backdrop-filter: blur(10px);
+            padding: 18px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
         }
 
-        .nav-brand { font-weight: 800; font-size: 18px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
-        .nav-user { font-size: 13px; color: var(--muted2); }
+        .header-left { display: flex; align-items: center; gap: 12px; }
 
-        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .logo-icon {
+            width: 34px; height: 34px; background: var(--accent);
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+        }
 
-        /* ── STATS CARDS ── */
+        .logo-icon svg { width: 18px; height: 18px; }
+        .logo-text { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
+
+        .btn-back {
+            display: flex; align-items: center; gap: 6px;
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: 10px; padding: 7px 13px;
+            font-size: 13px; font-weight: 600; color: var(--muted2);
+            text-decoration: none; transition: color 0.15s;
+        }
+        .btn-back:hover { color: var(--text); }
+
+        .wrapper { max-width: 1000px; margin: 0 auto; padding: 26px 20px 0; }
+
+        .hero-label {
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px;
+        }
+
+        .hero-title {
+            font-size: 24px; font-weight: 800; letter-spacing: -0.4px;
+            color: var(--text); margin-bottom: 26px;
+        }
+
+        /* ── FLASH ── */
+        .flash-sucesso {
+            background: var(--green-dim); border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 12px; padding: 12px 16px; font-size: 14px;
+            color: var(--green); margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .flash-erro {
+            background: var(--danger-dim); border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 12px; padding: 12px 16px; font-size: 14px;
+            color: var(--danger); margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        /* ── STATS ── */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px; margin-bottom: 28px;
         }
 
         .stat-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 20px;
-            border-radius: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 20px;
+            display: flex; flex-direction: column; gap: 8px;
         }
 
-        .stat-info p { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
-        .stat-info h2 { font-size: 24px; font-weight: 800; margin-top: 5px; }
-        .stat-icon { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        
-        .icon-users { background: var(--accent-dim); color: var(--accent); }
-        .icon-sales { background: var(--green-dim); color: var(--green); }
-
-        /* ── BACKUP BUTTON ── */
-        .backup-zone {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 20px;
-            border-radius: 20px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .btn-backup {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 12px 28px;
-            border-radius: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 14px;
-            transition: 0.2s;
-        }
-        .btn-backup:hover { opacity: 0.85; transform: scale(0.98); }
-
-        .restore-zone {
-            background: rgba(34, 197, 94, 0.05);
-            border: 1px dashed var(--green);
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .btn-restore {
-            background: var(--green);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 13px;
-            transition: 0.2s;
-        }
-        .btn-restore:hover { opacity: 0.8; transform: scale(0.98); }
-
-        /* ── EMERGENCY BUTTON ── */
-        .danger-zone {
-            background: rgba(239, 68, 68, 0.05);
-            border: 1px dashed var(--danger);
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            text-align: center;
+        .stat-card-title {
+            font-size: 12px; font-weight: 600; color: var(--muted2);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            display: flex; align-items: center; gap: 8px;
         }
 
-        .btn-reset {
-            background: var(--danger);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 13px;
-            transition: 0.2s;
-        }
-        .btn-reset:hover { opacity: 0.8; transform: scale(0.98); }
+        .stat-card-title i { color: var(--accent); }
+        .stat-card-value { font-size: 28px; font-weight: 800; color: var(--text); }
 
         /* ── CHART ── */
-        .card-chart {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 20px;
-            border-radius: 20px;
-            margin-bottom: 30px;
+        .chart-container {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 20px; margin-bottom: 28px; height: 300px;
         }
 
-        /* ── TABELAS MODERNAS ── */
-        .table-section {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            overflow: hidden;
+        /* ── ACTIONS ── */
+        .actions-bar {
+            display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
         }
 
-        .table-header {
-            padding: 20px;
+        .btn-system {
+            background: var(--surface2); border: 1px solid var(--border2);
+            color: var(--text); padding: 10px 16px; border-radius: 10px;
+            font-size: 13px; font-weight: 600; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .btn-system:hover { background: var(--border); }
+        .btn-system.danger { color: var(--danger); border-color: rgba(239,68,68,0.2); }
+        .btn-system.danger:hover { background: var(--danger-dim); }
+
+        /* ── TABELA ── */
+        .table-container {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; overflow-x: auto; margin-bottom: 40px;
+        }
+
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+
+        th, td {
+            padding: 14px 18px;
             border-bottom: 1px solid var(--border);
-            display: flex;
-            gap: 20px;
+            white-space: nowrap;
         }
 
-        .tab-btn {
-            background: transparent;
-            border: none;
-            color: var(--muted);
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            padding-bottom: 5px;
-            border-bottom: 2px solid transparent;
+        th {
+            background: var(--surface2); font-size: 11px; font-weight: 700;
+            color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px;
         }
 
-        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.01); }
 
-        .table-responsive { overflow-x: auto; }
-
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th { text-align: left; padding: 15px 20px; background: var(--surface2); color: var(--muted2); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
-        td { padding: 15px 20px; border-bottom: 1px solid var(--border); }
-        tr:hover { background: rgba(255,255,255,0.02); }
-
+        /* ── BADGES ── */
         .badge {
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
+            font-size: 10px; font-weight: 800; padding: 3px 8px;
+            border-radius: 5px; letter-spacing: 0.5px;
         }
-        .badge-vendor { background: var(--accent-dim); color: var(--accent); }
-        .badge-admin { background: var(--text); color: var(--bg); }
-        .badge-success { background: var(--green-dim); color: var(--green); }
 
-        /* ── BOTÕES DE AÇÃO ── */
-        .action-group { display: flex; gap: 12px; align-items: center; }
+        .badge-admin  { background: rgba(255,255,255,0.1); color: var(--text); }
+        .badge-premium { background: var(--gold-dim); color: var(--gold); }
+        .badge-destaque { background: rgba(245,158,11,0.2); color: var(--gold); border: 1px solid rgba(245,158,11,0.3); }
+        .badge-vendedor { background: var(--accent-dim); color: var(--accent); }
+
+        /* ── AÇÕES ── */
+        .action-buttons { display: flex; gap: 6px; justify-content: flex-end; align-items: center; }
+
         .btn-action {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            transition: 0.2s;
-            color: var(--muted);
-            padding: 5px;
-            text-decoration: none;
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; background: var(--surface2);
+            border: 1px solid var(--border2); color: var(--muted2);
+            text-decoration: none; font-size: 13px;
+            transition: all 0.15s; cursor: pointer;
         }
-        .btn-action:hover { transform: scale(1.2); }
-        .btn-crown.active { color: #ffc107; }
-        .btn-key { color: var(--accent); }
-        .btn-delete { color: var(--danger); }
+        .btn-action:hover { background: var(--border2); color: var(--text); }
 
         /* ── MODAL ── */
-        .modal-overlay {
-            position: fixed; top:0; left:0; width:100%; height:100%;
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
             display: none; align-items: center; justify-content: center; z-index: 2000;
         }
+
         .modal-content {
             background: var(--surface); border: 1px solid var(--border2);
-            padding: 30px; border-radius: 24px; width: 90%; max-width: 400px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-        .modal-content h4 { margin-bottom: 20px; font-weight: 800; color: var(--accent); }
-        .modal-input {
-            width: 100%; padding: 12px 15px; margin-bottom: 20px;
-            background: var(--surface2); border: 1px solid var(--border);
-            border-radius: 12px; color: white; outline: none;
-        }
-        .modal-input:focus { border-color: var(--accent); }
-        
-        .btn-confirm {
-            background: var(--accent); color: white; border: none;
-            padding: 12px 20px; border-radius: 12px; font-weight: 700; width: 100%;
-            cursor: pointer;
+            padding: 28px; border-radius: 22px; width: 90%; max-width: 420px;
         }
 
-        @media (max-width: 768px) {
-            .stats-grid { grid-template-columns: 1fr; }
+        .modal-title { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+        .modal-desc { font-size: 13px; color: var(--muted2); line-height: 1.6; margin-bottom: 20px; }
+
+        .file-input {
+            width: 100%; padding: 10px 14px; margin-bottom: 16px;
+            background: var(--surface2); border: 1px solid var(--border2);
+            border-radius: 10px; color: var(--text); font-size: 13px; cursor: pointer;
         }
+
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-cancel { flex: 1; background: var(--surface2); color: var(--muted2); padding: 12px; border: 1px solid var(--border2); border-radius: 10px; font-weight: 600; cursor: pointer; }
+        .btn-confirm { flex: 2; background: var(--danger); color: white; padding: 12px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        .btn-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .checkbox-group {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 20px; font-size: 13px; color: var(--danger); font-weight: 600;
+        }
+
+        /* ── MODAL SENHA ── */
+        .modal-input {
+            width: 100%; padding: 12px 15px; margin-bottom: 18px;
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 12px; color: white; outline: none; font-size: 15px;
+            font-family: inherit;
+        }
+        .modal-input:focus { border-color: var(--accent); }
+        .btn-save { width: 100%; background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 15px; }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <div class="nav-brand">
-            <i class="fa-solid fa-shield-halved"></i> SalesHub Admin
+<div class="header">
+    <div class="header-left">
+        <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
         </div>
-        <div class="nav-user">
-            <i class="fa-solid fa-circle-user me-1"></i> {{ current_user.username }}
-            <a href="/" style="color: var(--accent); text-decoration: none; margin-left: 15px; font-weight: 700;">Voltar</a>
-        </div>
-    </nav>
+        <span class="logo-text">Painel Master</span>
+    </div>
+    <a href="{{ url_for('index') }}" class="btn-back">← Início</a>
+</div>
 
-    <div class="container">
-        
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-info">
-                    <p>Contas Ativas</p>
-                    <h2>{{ total_usuarios }}</h2>
-                </div>
-                <div class="stat-icon icon-users"><i class="fa-solid fa-users"></i></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-info">
-                    <p>Receita Confirmada</p>
-                    <h2 style="color: var(--green);">R$ {{ "%.2f"|format(soma_vendas) }}</h2>
-                </div>
-                <div class="stat-icon icon-sales"><i class="fa-solid fa-sack-dollar"></i></div>
-            </div>
-        </div>
+<div class="wrapper">
 
-        <div class="backup-zone">
-            <p style="font-size: 11px; color: var(--muted); margin-bottom: 10px; font-weight: 700; text-transform: uppercase;">Backup de Dados</p>
-            <form action="{{ url_for('criar_backup') }}" method="POST">
-                <button type="submit" class="btn-backup">
-                    <i class="fa-solid fa-download me-1"></i> Baixar Backup Completo
-                </button>
-            </form>
-        </div>
+    <p class="hero-label">Controle de Sistema</p>
+    <h1 class="hero-title">Visão Geral — SalesHub</h1>
 
-        <div class="restore-zone">
-            <p style="font-size: 11px; color: var(--muted); margin-bottom: 10px; font-weight: 700; text-transform: uppercase;">Restaurar Backup</p>
-            <button type="button" onclick="openRestoreModal()" class="btn-restore">
-                <i class="fa-solid fa-upload me-1"></i> Restaurar Backup
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          {% if category == 'sucesso' %}
+            <div class="flash-sucesso"><i class="fa-solid fa-check"></i> {{ message }}</div>
+          {% else %}
+            <div class="flash-erro"><i class="fa-solid fa-triangle-exclamation"></i> {{ message }}</div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- ESTATÍSTICAS -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-card-title"><i class="fa-solid fa-users"></i> Usuários</div>
+            <!-- ✅ CORRIGIDO: total_usuarios -->
+            <div class="stat-card-value">{{ total_usuarios }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-title"><i class="fa-solid fa-receipt"></i> Pedidos</div>
+            <!-- ✅ CORRIGIDO: todos_pedidos|length -->
+            <div class="stat-card-value">{{ todos_pedidos|length }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-title"><i class="fa-solid fa-brazilian-real-sign"></i> Movimentação</div>
+            <!-- ✅ CORRIGIDO: soma_vendas -->
+            <div class="stat-card-value">R$ {{ "%.2f"|format(soma_vendas) }}</div>
+        </div>
+    </div>
+
+    <!-- GRÁFICO -->
+    <p class="hero-label">Desempenho por Barraca</p>
+    <div class="chart-container">
+        <canvas id="vendasChart"></canvas>
+    </div>
+
+    <!-- AÇÕES DO SISTEMA -->
+    <p class="hero-label">Ações do Sistema</p>
+    <div class="actions-bar">
+        <!-- ✅ CORRIGIDO: criar_backup (POST) -->
+        <form action="{{ url_for('criar_backup') }}" method="POST" style="display:inline;">
+            <button type="submit" class="btn-system">
+                <i class="fa-solid fa-download"></i> Baixar Backup
             </button>
-        </div>
+        </form>
+        <button onclick="openRestoreModal()" class="btn-system">
+            <i class="fa-solid fa-upload"></i> Restaurar Backup
+        </button>
+        <!-- ✅ CORRIGIDO: reset_database -->
+        <form action="{{ url_for('reset_database') }}" method="POST" style="display:inline;"
+              onsubmit="return confirm('ATENÇÃO: Isso apagará TODOS os dados. Tem certeza?')">
+            <button type="submit" class="btn-system danger">
+                <i class="fa-solid fa-skull"></i> Resetar Banco
+            </button>
+        </form>
+    </div>
 
-        <div class="danger-zone">
-            <p style="font-size: 11px; color: var(--muted); margin-bottom: 10px; font-weight: 700; text-transform: uppercase;">Controle de Instância</p>
-            <form action="{{ url_for('reset_database') }}" method="POST" onsubmit="return confirm('ATENÇÃO: Isso apagará TODOS os dados do sistema!')">
-                <button type="submit" class="btn-reset">
-                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Resetar Tudo
+    <!-- TABELA DE USUÁRIOS -->
+    <p class="hero-label">Gestão de Contas</p>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Usuário</th>
+                    <th>Barraca / Turma</th>
+                    <th>Status</th>
+                    <th style="text-align:right;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- ✅ CORRIGIDO: todos_usuarios -->
+                {% for u in todos_usuarios %}
+                <tr>
+                    <td>
+                        <strong>{{ u.username }}</strong>
+                        <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+                            ID: {{ u.id }} · IP: {{ u.ip_registro or '—' }}
+                        </div>
+                    </td>
+                    <td>
+                        {{ u.nome_barraca or '—' }}
+                        <div style="font-size:11px;color:var(--muted2);">{{ u.turma or '—' }}</div>
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                            {% if u.tipo == 'vendedor' %}
+                                <span class="badge badge-vendedor">Vendedor</span>
+                            {% else %}
+                                <span class="badge" style="background:var(--surface2);color:var(--muted2);">Cliente</span>
+                            {% endif %}
+                            {% if u.is_admin %}
+                                <span class="badge badge-admin">Admin</span>
+                            {% endif %}
+                            {% if u.is_premium %}
+                                <span class="badge badge-premium">Premium</span>
+                            {% endif %}
+                            {% if u.is_destaque %}
+                                <span class="badge badge-destaque">⚡ Destaque</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <!-- Toggle Admin -->
+                            <a href="{{ url_for('toggle_admin', id=u.id) }}"
+                               class="btn-action"
+                               style="{{ 'color:#ef4444;border-color:rgba(239,68,68,0.3)' if u.is_admin else '' }}"
+                               title="Toggle Admin">
+                                <i class="fa-solid fa-shield"></i>
+                            </a>
+
+                            <!-- Toggle Premium -->
+                            <a href="{{ url_for('toggle_premium', id=u.id) }}"
+                               class="btn-action"
+                               style="{{ 'color:#f59e0b;border-color:rgba(245,158,11,0.3)' if u.is_premium else '' }}"
+                               title="Toggle Premium">
+                                <i class="fa-solid fa-crown"></i>
+                            </a>
+
+                            <!-- Toggle Destaque -->
+                            <a href="{{ url_for('toggle_destaque', id=u.id) }}"
+                               class="btn-action"
+                               style="{{ 'color:#f59e0b;border-color:rgba(245,158,11,0.3)' if u.is_destaque else '' }}"
+                               title="Toggle Destaque">
+                                <i class="fa-solid fa-bolt"></i>
+                            </a>
+
+                            <!-- Redefinir Senha -->
+                            <button onclick="openPwdModal('{{ u.id }}', '{{ u.username }}')"
+                                    class="btn-action"
+                                    style="color:var(--accent);"
+                                    title="Redefinir Senha">
+                                <i class="fa-solid fa-key"></i>
+                            </button>
+
+                            <!-- Deletar -->
+                            {% if u.id != current_user.id %}
+                            <!-- ✅ CORRIGIDO: delete_user -->
+                            <a href="{{ url_for('delete_user', id=u.id) }}"
+                               class="btn-action"
+                               style="color:var(--danger);"
+                               onclick="return confirm('Excluir {{ u.username }} permanentemente?')"
+                               title="Excluir">
+                                <i class="fa-solid fa-trash"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- TABELA DE PEDIDOS -->
+    <p class="hero-label">Transações Recentes</p>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Data/Hora</th>
+                    <th>Barraca</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in todos_pedidos[:30] %}
+                <tr>
+                    <td style="color:var(--muted2);">#{{ p.id }}</td>
+                    <td style="font-size:12px;color:var(--muted2);">
+                        {{ p.data_hora.strftime('%d/%m/%Y %H:%M') if p.data_hora else '—' }}
+                    </td>
+                    <td>
+                        {% for b in barracas_lideres %}
+                            {% if b.id == p.vendedor_id %}{{ b.nome_barraca }}{% endif %}
+                        {% endfor %}
+                    </td>
+                    <td style="font-weight:800;color:var(--green);">R$ {{ "%.2f"|format(p.valor_total) }}</td>
+                    <td>
+                        {% if p.status == 'Confirmado' %}
+                            <span class="badge" style="background:var(--green-dim);color:var(--green);">PAGO</span>
+                        {% else %}
+                            <span class="badge" style="background:rgba(245,158,11,0.1);color:#f59e0b;">PENDENTE</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Nenhuma transação.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- MODAL RESTAURAR BACKUP -->
+<div id="restoreModal" class="modal">
+    <div class="modal-content">
+        <h2 class="modal-title">Restaurar Sistema</h2>
+        <p class="modal-desc">
+            Faça upload do arquivo JSON de backup.
+            <strong style="color:var(--danger);">Atenção:</strong>
+            Todos os dados atuais serão substituídos.
+        </p>
+        <form action="{{ url_for('restaurar_backup') }}" method="POST" enctype="multipart/form-data">
+            <input type="file" name="backup_file" accept=".json" class="file-input" required>
+            <div class="checkbox-group">
+                <input type="checkbox" id="confirmRestore">
+                <label for="confirmRestore">Entendo que os dados atuais serão perdidos</label>
+            </div>
+            <input type="hidden" name="confirmacao" id="confirmValue" value="">
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeRestoreModal()">Cancelar</button>
+                <button type="submit" class="btn-confirm" id="btnRestoreSubmit" disabled>Restaurar Agora</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL REDEFINIR SENHA -->
+<div id="pwdModal" class="modal">
+    <div class="modal-content">
+        <h2 class="modal-title" id="pwdModalTitle">Redefinir Senha</h2>
+        <p class="modal-desc">Nova senha para o usuário selecionado:</p>
+        <form id="pwdForm" method="POST">
+            <input type="password" name="nova_senha" class="modal-input"
+                   placeholder="Nova senha" required>
+            <div style="display:flex;gap:10px;">
+                <button type="button" onclick="closePwdModal()"
+                        style="flex:1;background:none;border:none;color:var(--muted);cursor:pointer;font-weight:700;">
+                    Cancelar
                 </button>
-            </form>
-        </div>
-
-        <div class="card-chart">
-            <p style="font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 15px; text-transform: uppercase;">Volume de Vendas por Ponto</p>
-            <div style="height: 300px;">
-                <canvas id="vendasChart"></canvas>
+                <button type="submit" class="btn-save" style="flex:2;">Salvar</button>
             </div>
-        </div>
-
-        <div class="table-section">
-            <div class="table-header">
-                <button class="tab-btn active" onclick="switchTab('users')">Gestão de Contas</button>
-                <button class="tab-btn" onclick="switchTab('orders')">Transações</button>
-            </div>
-
-            <div id="tab-users" class="tab-content table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Identificação</th>
-                            <th>Tipo</th>
-                            <th>Lotação</th>
-                            <th>Admin</th>
-                            <th style="text-align: right;">Ações de Controle</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for u in todos_usuarios %}
-                        <tr>
-                            <td>
-                                <div style="font-weight: 700;">{{ u.username }}</div>
-                                <div style="font-size: 10px; color: var(--muted);">IP: {{ u.ip_registro or '0.0.0.0' }}</div>
-                            </td>
-                            <td><span class="badge {% if u.tipo == 'vendedor' %}badge-vendor{% else %}badge-muted{% endif %}">{{ u.tipo|upper }}</span></td>
-                            <td>{{ u.nome_barraca or '-' }} <br> <small style="color: var(--muted2)">{{ u.turma or '-' }}</small></td>
-                            <td>
-                                {% if u.is_admin %}
-                                    <span class="badge badge-admin"><i class="fa-solid fa-check me-1"></i>SIM</span>
-                                {% else %}
-                                    <span style="color: var(--muted); font-size: 11px;">Não</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="action-group" style="justify-content: flex-end;">
-                                    <a href="{{ url_for('toggle_admin', id=u.id) }}" 
-                                       class="btn-action btn-crown {{ 'active' if u.is_admin }}" 
-                                       title="Alternar Privilégios Admin">
-                                        <i class="fa-solid fa-crown"></i>
-                                    </a>
-
-                                    <button onclick="openPwdModal('{{ u.id }}', '{{ u.username }}')" 
-                                            class="btn-action btn-key" 
-                                            title="Alterar Senha Forçadamente">
-                                        <i class="fa-solid fa-key"></i>
-                                    </button>
-
-                                    {% if u.id != current_user.id %}
-                                    <a href="{{ url_for('delete_user', id=u.id) }}" 
-                                       class="btn-action btn-delete" 
-                                       onclick="return confirm('Deseja excluir permanentemente a conta de {{ u.username }}?')"
-                                       title="Excluir Usuário">
-                                        <i class="fa-solid fa-user-minus"></i>
-                                    </a>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <div id="tab-orders" class="tab-content table-responsive" style="display:none;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Data/Hora</th>
-                            <th>ID Transação</th>
-                            <th>Valor</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for p in todos_pedidos %}
-                        <tr>
-                            <td style="font-size: 12px;">{{ p.data_hora.strftime('%d/%m %H:%M') }}</td>
-                            <td><span style="color: var(--muted2);">#{{ p.id }}</span></td>
-                            <td style="font-weight: 800; color: var(--green);">R$ {{ "%.2f"|format(p.valor_total) }}</td>
-                            <td><span class="badge badge-success">APROVADO</span></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        </form>
     </div>
+</div>
 
-    <div id="pwdModal" class="modal-overlay">
-        <div class="modal-content">
-            <h4 id="modalTitle">Reset de Credenciais</h4>
-            <form id="pwdForm" method="POST">
-                <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Defina a nova senha para o usuário abaixo:</p>
-                <input type="password" name="nova_senha" class="modal-input" placeholder="Nova senha de acesso" required>
-                <div style="display: flex; gap: 10px;">
-                    <button type="button" onclick="closeModal()" style="flex:1; background:none; border:none; color:var(--muted); cursor:pointer; font-weight:700;">Cancelar</button>
-                    <button type="submit" class="btn-confirm" style="flex:2;">Atualizar Senha</button>
-                </div>
-            </form>
-        </div>
-    </div>
+<script>
+    // ── MODAL RESTAURAR ──
+    function openRestoreModal() {
+        document.getElementById('restoreModal').style.display = 'flex';
+    }
+    function closeRestoreModal() {
+        document.getElementById('restoreModal').style.display = 'none';
+    }
+    document.getElementById('confirmRestore').addEventListener('change', function() {
+        document.getElementById('confirmValue').value = this.checked ? 'RESTAURAR' : '';
+        document.getElementById('btnRestoreSubmit').disabled = !this.checked;
+    });
 
-    <div id="restoreModal" class="modal-overlay">
-        <div class="modal-content">
-            <h4>Restaurar Backup</h4>
-            <form action="{{ url_for('restaurar_backup') }}" method="POST" enctype="multipart/form-data">
-                <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Selecione o arquivo JSON de backup:</p>
-                <input type="file" name="arquivo_backup" accept=".json" class="modal-input" required>
-                <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--danger); margin-bottom: 15px; cursor: pointer;">
-                    <input type="checkbox" id="confirmRestore" style="width: 16px; height: 16px; accent-color: var(--danger);">
-                    Confirmo que isso substituirá TODOS os dados atuais
-                </label>
-                <input type="hidden" name="confirmar_restauracao" id="confirmValue" value="">
-                <div style="display: flex; gap: 10px;">
-                    <button type="button" onclick="closeRestoreModal()" style="flex:1; background:none; border:none; color:var(--muted); cursor:pointer; font-weight:700;">Cancelar</button>
-                    <button type="submit" class="btn-confirm" id="btnRestoreSubmit" disabled>Restaurar Dados</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    // ── MODAL SENHA ──
+    function openPwdModal(id, username) {
+        document.getElementById('pwdModalTitle').innerText = 'Senha: ' + username;
+        document.getElementById('pwdForm').action = '/admin/reset_password/' + id;
+        document.getElementById('pwdModal').style.display = 'flex';
+    }
+    function closePwdModal() {
+        document.getElementById('pwdModal').style.display = 'none';
+    }
 
-    <script>
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + tab).style.display = 'block';
-            event.currentTarget.classList.add('active');
-        }
-
-        function openPwdModal(id, username) {
-            document.getElementById('modalTitle').innerText = username;
-            document.getElementById('pwdForm').action = "/admin/reset_password/" + id;
-            document.getElementById('pwdModal').style.display = 'flex';
-        }
-
-        function closeModal() {
-            document.getElementById('pwdModal').style.display = 'none';
-        }
-
-        function openRestoreModal() {
-            document.getElementById('confirmRestore').checked = false;
-            document.getElementById('confirmValue').value = '';
-            document.getElementById('btnRestoreSubmit').disabled = true;
-            document.getElementById('restoreModal').style.display = 'flex';
-        }
-
-        function closeRestoreModal() {
-            document.getElementById('restoreModal').style.display = 'none';
-        }
-
-        document.getElementById('confirmRestore').addEventListener('change', function() {
-            document.getElementById('confirmValue').value = this.checked ? 'RESTAURAR' : '';
-            document.getElementById('btnRestoreSubmit').disabled = !this.checked;
+    // Fecha modais clicando fora
+    ['restoreModal','pwdModal'].forEach(id => {
+        document.getElementById(id).addEventListener('click', function(e) {
+            if (e.target === this) this.style.display = 'none';
         });
+    });
 
-        // Gráfico
-        const ctx = document.getElementById('vendasChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: [{% for v in vendas_por_barraca %}"{{ v[0] }}",{% endfor %}],
-                datasets: [{
-                    label: 'Vendas (R$)',
-                    data: [{% for v in vendas_por_barraca %}{{ v[1] }},{% endfor %}],
-                    backgroundColor: '#7c6ef7',
-                    borderRadius: 8,
-                    barThickness: 20,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#6e6a8a', font: { size: 10 } } },
-                    x: { grid: { display: false }, ticks: { color: '#6e6a8a', font: { size: 10 } } }
-                }
+    // ── GRÁFICO ──
+    const ctx = document.getElementById('vendasChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [{% for v in vendas_por_barraca %}"{{ v[0] }}",{% endfor %}],
+            datasets: [{
+                label: 'Vendas (R$)',
+                data: [{% for v in vendas_por_barraca %}{{ v[1] }},{% endfor %}],
+                backgroundColor: '#7c6ef7',
+                borderRadius: 8,
+                barThickness: 24,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#6e6a8a', font: { size: 10 } } },
+                x: { grid: { display: false }, ticks: { color: '#6e6a8a', font: { size: 10 } } }
             }
-        });
-    </script>
+        }
+    });
+</script>
 </body>
 </html>
