@@ -1149,18 +1149,18 @@ def toggle_destaque(id):
 @app.route('/health')
 def health():
     return 'OK', 200
-@app.route('/migrar')
-def migrar():
+    
+@app.route('/migrar_avaliacao')
+def migrar_avaliacao():
     try:
-        # Adiciona a coluna 'custo' na tabela 'produto'
-        db.session.execute(text("ALTER TABLE produto ADD COLUMN custo FLOAT DEFAULT 0.0;"))
-        # Adiciona a coluna 'custo_unitario' na tabela 'item_pedido'
-        db.session.execute(text("ALTER TABLE item_pedido ADD COLUMN custo_unitario FLOAT DEFAULT 0.0;"))
+        # Adiciona a coluna 'fixado' na tabela 'avaliacao' (tipo booleano, padrão False)
+        db.session.execute(text("ALTER TABLE avaliacao ADD COLUMN fixado BOOLEAN DEFAULT FALSE;"))
         db.session.commit()
-        return "Estrutura da base de dados atualizada com sucesso!", 200
+        return "Coluna 'fixado' adicionada à tabela de avaliações com sucesso!", 200
     except Exception as e:
         db.session.rollback()
         return f"Erro na migração: {str(e)}", 500
+        
 # --- INICIALIZAÇÃO ---
 def criar_admin_master():
     if not Usuario.query.filter_by(username="Arthur").first():
