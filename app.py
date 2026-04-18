@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 import sys
 import base64
@@ -70,7 +71,6 @@ class Usuario(UserMixin, db.Model):
     descricao = db.Column(db.Text, nullable=True)
     foto_estande = db.Column(db.Text, nullable=True)
     foto_qrcode_pix = db.Column(db.Text, nullable=True)
-    custo_operacional = db.Column(db.Float, default=0.0)
     is_premium = db.Column(db.Boolean, default=False)
     is_destaque = db.Column(db.Boolean, default=False)
     produtos = db.relationship('Produto', backref='dono', lazy=True, cascade="all, delete-orphan")
@@ -81,25 +81,28 @@ class Produto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     preco = db.Column(db.Float, nullable=False)
+    custo = db.Column(db.Float, nullable=False, default=0.0) # NOVO CAMPO
     descricao = db.Column(db.String(200))
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
-
 class Pedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    data_hora = db.Column(db.DateTime, default=datetime.utcnow)
     valor_total = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), default='Pendente')
-    data_hora = db.Column(db.DateTime, default=db.func.current_timestamp())
     cliente_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     vendedor_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
-    itens = db.relationship('ItemPedido', backref='pedido', lazy=True, cascade="all, delete-orphan")
-
+    
+    itens = db.relationship('ItemPedido', backref='pedido_pai', lazy=True, cascade="all, delete-orphan")
 class ItemPedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    
+    
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedido.id'), nullable=False)
+    
     produto_nome = db.Column(db.String(100))
     quantidade = db.Column(db.Integer, nullable=False)
     preco_unitario = db.Column(db.Float, nullable=False)
-
+    custo_unitario = db.Column(db.Float, nullable=False, default=0.0)
 class Avaliacao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nota = db.Column(db.Integer, nullable=False)
@@ -225,15 +228,16 @@ def meus_produtos():
     if request.method == "POST":
         nome = request.form.get("nome")
         preco = request.form.get("preco")
+        custo = request.form.get("custo") # CAPTURA O CUSTO
         descricao = request.form.get("descricao")
-        if nome and preco:
-            novo_p = Produto(nome=nome, preco=float(preco), descricao=descricao, usuario_id=barraca_id)
+        if nome and preco and custo:
+            novo_p = Produto(nome=nome, preco=float(preco), custo=float(custo), descricao=descricao, usuario_id=barraca_id)
             db.session.add(novo_p)
             db.session.commit()
             flash("Produto adicionado com sucesso!", "sucesso")
             return redirect(url_for('meus_produtos'))
         else:
-            flash("Nome e preço são obrigatórios.", "erro")
+            flash("Nome, preço e custo são obrigatórios.", "erro")
 
     produtos = Produto.query.filter_by(usuario_id=barraca_id).all()
     return render_template("meus_produtos.html", produtos=produtos)
@@ -438,6 +442,16 @@ def ver_barraca(usuario_id):
                 total_pedido += p.preco * qtd
                 itens_selecionados.append({'p': p, 'qtd': qtd})
 
+        if total_pedido >= 0:
+         itens_selecionados = []
+        for p in produtos:
+            qtd_str = request.form.get(f"qtd_{p.id}", "0")
+            qtd = int(qtd_str) if qtd_str.isdigit() else 0
+            if qtd > 0:
+                total_pedido += p.preco * qtd
+                # Agora salvamos o custo junto na memória
+                itens_selecionados.append({'p': p, 'qtd': qtd, 'custo': p.custo})
+
         if total_pedido > 0:
             novo_pedido = Pedido(valor_total=total_pedido, cliente_id=current_user.id, vendedor_id=barraca.id)
             db.session.add(novo_pedido)
@@ -447,7 +461,8 @@ def ver_barraca(usuario_id):
                     pedido_id=novo_pedido.id,
                     produto_nome=item['p'].nome,
                     quantidade=item['qtd'],
-                    preco_unitario=item['p'].preco
+                    preco_unitario=item['p'].preco,
+                    custo_unitario=item['custo'] # GRAVA O CUSTO NO HISTÓRICO DO PEDIDO
                 ))
             db.session.commit()
             return render_template("pagamento_pix.html", pedido=novo_pedido, barraca=barraca)
@@ -908,6 +923,228 @@ def fixar_avaliacao(id):
     else:
         flash("Acesso negado.", "erro")
     return redirect(url_for('ver_barraca', usuario_id=av.barraca_id))
+
+    # ─────────────────────────────────────────────────────────────────────────────
+# COLE ESTE BLOCO NO app.py  →  antes de "# --- HEALTH CHECK ---"
+# ─────────────────────────────────────────────────────────────────────────────
+
+# --- MÓDULO PREMIUM ---
+
+def _calcular_dados_premium(barraca_id):
+    """Centraliza todos os cálculos do painel premium."""
+    from collections import defaultdict
+
+    barraca = Usuario.query.get(barraca_id)
+    confirmados = Pedido.query.filter_by(
+        vendedor_id=barraca_id, status='Confirmado'
+    ).order_by(Pedido.data_hora).all()
+
+    receita_total = sum(p.valor_total for p in confirmados)
+    total_vendas  = len(confirmados)
+    
+    # NOVO CÁLCULO DE CUSTO DINÂMICO
+    custo = 0.0
+    for pedido in confirmados:
+        for item in pedido.itens:
+            custo += (item.quantidade * item.custo_unitario)
+
+    lucro         = receita_total - custo
+    margem        = (lucro / receita_total * 100) if receita_total > 0 else 0
+    ticket_medio  = receita_total / total_vendas if total_vendas > 0 else 0
+    # ── Tendência por dia ──
+    tendencia = defaultdict(float)
+    for p in confirmados:
+        if p.data_hora:
+            dia = p.data_hora.strftime('%d/%m')
+            tendencia[dia] += p.valor_total
+    tendencia_labels = list(tendencia.keys())
+    tendencia_data   = [round(v, 2) for v in tendencia.values()]
+
+    # ── Vendas por hora ──
+    hora_contagem = defaultdict(int)
+    for p in confirmados:
+        if p.data_hora:
+            hora_contagem[p.data_hora.hour] += 1
+    hora_labels = [f"{h}h" for h in range(6, 22)]
+    hora_data   = [hora_contagem.get(h, 0) for h in range(6, 22)]
+    hora_pico   = (
+        max(hora_contagem, key=hora_contagem.get)
+        if hora_contagem else None
+    )
+
+    # ── Produtos mais vendidos ──
+    prod_qtd     = defaultdict(int)
+    prod_receita = defaultdict(float)
+    prod_preco   = {}
+
+    for pedido in confirmados:
+        for item in pedido.itens:
+            prod_qtd[item.produto_nome]     += item.quantidade
+            prod_receita[item.produto_nome] += item.quantidade * item.preco_unitario
+            prod_preco[item.produto_nome]    = item.preco_unitario
+
+    total_itens  = sum(prod_qtd.values())
+
+    class ProdutoStat:
+        def __init__(self, nome, quantidade, receita, preco_unit):
+            self.nome      = nome
+            self.quantidade = quantidade
+            self.receita   = receita
+            self.preco_unit = preco_unit
+
+    top_produtos = sorted(
+        [ProdutoStat(n, prod_qtd[n], prod_receita[n], prod_preco[n])
+         for n in prod_qtd],
+        key=lambda x: x.quantidade,
+        reverse=True
+    )[:8]
+
+    total_produtos = Produto.query.filter_by(usuario_id=barraca_id).count()
+
+    # Mix de receita (para gráfico doughnut)
+    mix_labels = [p.nome for p in top_produtos[:6]]
+    mix_data   = [round(p.receita, 2) for p in top_produtos[:6]]
+
+    # ── Avaliações ──
+    # Limite para evitar carregar muitas avaliações em memória
+    avaliacoes = Avaliacao.query.filter_by(barraca_id=barraca_id).limit(500).all()
+    total_av      = len(avaliacoes)
+    media_nota_av = round(
+        sum(a.nota for a in avaliacoes) / total_av, 1
+    ) if total_av > 0 else None
+    distribuicao  = {i: sum(1 for a in avaliacoes if a.nota == i) for i in range(1, 6)}
+
+    return dict(
+        barraca=barraca,
+        receita_total=receita_total,
+        total_vendas=total_vendas,
+        custo=custo,
+        lucro=lucro,
+        margem=margem,
+        ticket_medio=ticket_medio,
+        total_itens=total_itens,
+        total_produtos=total_produtos,
+        hora_pico=hora_pico,
+        top_produtos=top_produtos,
+        tendencia_labels=tendencia_labels,
+        tendencia_data=tendencia_data,
+        hora_labels=hora_labels,
+        hora_data=hora_data,
+        mix_labels=mix_labels,
+        mix_data=mix_data,
+        total_avaliacoes=total_av,
+        media_nota=media_nota_av,
+        distribuicao=distribuicao,
+        confirmados=confirmados,
+    )
+
+
+@app.route("/premium")
+@login_required
+def premium():
+    # Descobre a barraca do usuário (líder ou membro)
+    if current_user.tipo == 'vendedor':
+        barraca_id = current_user.id
+    else:
+        assoc = MembroBarraca.query.filter_by(
+            usuario_id=current_user.id, status='aprovado'
+        ).first()
+        if not assoc:
+            flash("Você não está associado a nenhuma barraca.", "erro")
+            return redirect(url_for('index'))
+        barraca_id = assoc.barraca_id
+
+    barraca = Usuario.query.get_or_404(barraca_id)
+
+    # Se não premium, renderiza tela de bloqueio mas passa dados básicos
+    if not barraca.is_premium:
+        return render_template("premium.html",
+                               receita_total=0, total_vendas=0,
+                               custo=0, lucro=0, margem=0,
+                               ticket_medio=0, total_itens=0,
+                               total_produtos=0, hora_pico=None,
+                               top_produtos=[], tendencia_labels=[],
+                               tendencia_data=[], hora_labels=[],
+                               hora_data=[], mix_labels=[], mix_data=[],
+                               total_avaliacoes=0)
+
+    dados = _calcular_dados_premium(barraca_id)
+    return render_template("premium.html", **dados)
+
+
+@app.route("/relatorio")
+@login_required
+def relatorio():
+    if current_user.tipo == 'vendedor':
+        barraca_id = current_user.id
+    else:
+        assoc = MembroBarraca.query.filter_by(
+            usuario_id=current_user.id, status='aprovado'
+        ).first()
+        if not assoc:
+            flash("Acesso negado.", "erro")
+            return redirect(url_for('index'))
+        barraca_id = assoc.barraca_id
+
+    barraca = Usuario.query.get_or_404(barraca_id)
+
+    if not barraca.is_premium:
+        flash("Relatórios disponíveis apenas no plano Premium.", "erro")
+        return redirect(url_for('premium'))
+
+    dados = _calcular_dados_premium(barraca_id)
+    membros = MembroBarraca.query.filter_by(
+        barraca_id=barraca_id, status='aprovado'
+    ).all()
+
+    pedidos_recentes = dados['confirmados'][-15:][::-1]  # últimos 15 invertidos
+
+    return render_template("relatorio.html",
+                           barraca=barraca,
+                           receita_total=dados['receita_total'],
+                           total_vendas=dados['total_vendas'],
+                           custo=dados['custo'],
+                           lucro=dados['lucro'],
+                           margem=dados['margem'],
+                           ticket_medio=dados['ticket_medio'],
+                           top_produtos=dados['top_produtos'],
+                           pedidos_recentes=pedidos_recentes,
+                           membros=membros,
+                           total_avaliacoes=dados['total_avaliacoes'],
+                           media_nota=dados['media_nota'],
+                           distribuicao=dados['distribuicao'],
+                           data_geracao=datetime.utcnow().strftime('%d/%m/%Y às %H:%M'))
+
+
+@app.route('/admin/toggle_premium/<int:id>')
+@login_required
+def toggle_premium(id):
+    if not current_user.is_admin:
+        abort(403)
+    u = Usuario.query.get_or_404(id)
+    u.is_premium = not u.is_premium
+    db.session.commit()
+    status = "ativado" if u.is_premium else "desativado"
+    flash(f"Premium {status} para {u.username}!", "sucesso")
+    return redirect(url_for('admin_panel'))
+
+# --- MÓDULO TRÁFEGO PAGO ---
+ 
+@app.route('/admin/toggle_destaque/<int:id>')
+@login_required
+def toggle_destaque(id):
+    if not current_user.is_admin:
+        abort(403)
+    u = Usuario.query.get_or_404(id)
+    u.is_destaque = not u.is_destaque
+    db.session.commit()
+    status = "ativado" if u.is_destaque else "desativado"
+    flash(f"Destaque {status} para {u.username}!", "sucesso")
+    return redirect(url_for('admin_panel'))
+ 
+
+
+
 # --- HEALTH CHECK ---
 @app.route('/health')
 def health():
