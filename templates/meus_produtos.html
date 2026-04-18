@@ -21,6 +21,7 @@
             --muted2: #9e9bb8;
             --danger: #ef4444;
             --danger-dim: rgba(239,68,68,0.08);
+            --gold: #f59e0b;
         }
 
         body {
@@ -148,7 +149,14 @@
         .form-body { padding: 18px; }
 
         .field { margin-bottom: 14px; }
-        .field:last-child { margin-bottom: 0; }
+        
+        .field-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        
+        .field-group .field { margin-bottom: 0; flex: 1; }
 
         .field-label {
             font-size: 12px;
@@ -267,12 +275,20 @@
         }
 
         .product-desc {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--muted2);
-            margin-top: 3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            margin-top: 4px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .tag-lucro {
+            background: var(--green-dim);
+            color: var(--green);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
         }
 
         .product-right {
@@ -286,7 +302,7 @@
         .product-price {
             font-size: 15px;
             font-weight: 800;
-            color: var(--green);
+            color: var(--text);
         }
 
         .btn-delete {
@@ -326,7 +342,6 @@
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header">
     <div class="header-left">
         <div class="logo-icon">
@@ -342,13 +357,11 @@
 
 <div class="wrapper">
 
-    <!-- HERO -->
     <div class="hero">
         <p class="hero-label">Gestão de Estoque</p>
         <h1 class="hero-title">Meu <span>Cardápio</span></h1>
     </div>
 
-    <!-- FLASH -->
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         {% for message in messages %}
@@ -357,7 +370,6 @@
       {% endif %}
     {% endwith %}
 
-    <!-- FORM NOVO PRODUTO -->
     <p class="section-title">Adicionar Produto</p>
     <div class="form-card">
         <div class="form-card-header">Novo Item</div>
@@ -367,9 +379,15 @@
                     <label class="field-label">Nome do Item</label>
                     <input type="text" name="nome" placeholder="ex: Coxinha de Frango" required>
                 </div>
-                <div class="field">
-                    <label class="field-label">Preço (R$)</label>
-                    <input type="number" name="preco" step="0.01" min="0" placeholder="ex: 5.00" required>
+                <div class="field-group">
+                    <div class="field">
+                        <label class="field-label">Custo Unitário (R$)</label>
+                        <input type="number" name="custo" step="0.01" min="0" placeholder="ex: 2.50" required>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Preço de Venda (R$)</label>
+                        <input type="number" name="preco" step="0.01" min="0" placeholder="ex: 5.00" required>
+                    </div>
                 </div>
                 <div class="field">
                     <label class="field-label">Descrição <span style="color: var(--muted); font-weight: 400;">(opcional)</span></label>
@@ -380,7 +398,6 @@
         </div>
     </div>
 
-    <!-- LISTA DE PRODUTOS -->
     <p class="section-title">Itens Cadastrados</p>
     <div class="products-card">
         <div class="products-header">
@@ -393,11 +410,10 @@
             <div class="product-avatar">🍽</div>
             <div class="product-info">
                 <p class="product-name">{{ p.nome }}</p>
-                {% if p.descricao %}
-                <p class="product-desc">{{ p.descricao }}</p>
-                {% else %}
-                <p class="product-desc" style="color: var(--muted); font-style: italic;">Sem descrição</p>
-                {% endif %}
+                <div class="product-desc">
+                    <span>Custo: R$ {{ "%.2f"|format(p.custo) }}</span>
+                    <span class="tag-lucro">+ R$ {{ "%.2f"|format(p.preco - p.custo) }} lucro</span>
+                </div>
             </div>
             <div class="product-right">
                 <span class="product-price">R$ {{ "%.2f"|format(p.preco) }}</span>
