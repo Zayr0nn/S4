@@ -2,220 +2,602 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Relatório Geral - SalesHub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório — {{ barraca.nome_barraca }}</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --bg: #0a0a0f;
-            --surface: #13131a;
-            --surface2: #1c1c26;
-            --border: rgba(255,255,255,0.07);
-            --border2: rgba(255,255,255,0.12);
             --accent: #7c6ef7;
             --green: #22c55e;
-            --green-dim: rgba(34,197,94,0.12);
-            --text: #f1f0ff;
-            --muted: #6e6a8a;
-            --muted2: #9e9bb8;
+            --gold: #f59e0b;
+            --danger: #ef4444;
+            --text: #1a1a2e;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --surface: #f9fafb;
         }
 
         body {
-            font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
-            background: var(--bg);
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: #f3f4f6;
             color: var(--text);
-            min-height: 100vh;
-            padding-bottom: 30px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 480px;
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(10px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-
-        /* ── HEADER SIMPLIFICADO ── */
-        .header-actions {
             padding: 20px;
-            position: sticky;
-            top: 0;
-            background: rgba(10, 10, 15, 0.8);
-            backdrop-filter: blur(12px);
-            z-index: 100;
         }
 
-        .btn-back { 
-            display: inline-flex;
-            align-items: center;
-            background: var(--surface); 
-            color: var(--text); 
-            border: 1px solid var(--border); 
-            font-size: 13px; 
-            font-weight: 600;
-            padding: 8px 16px;
+        /* ── BOTÕES DE AÇÃO (só na tela, não na impressão) ── */
+        .action-bar {
+            display: flex; gap: 12px; margin-bottom: 24px;
+            max-width: 800px; margin-left: auto; margin-right: auto;
+        }
+
+        .btn-print {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--accent); color: #fff;
+            border: none; border-radius: 10px;
+            padding: 10px 20px; font-size: 14px; font-weight: 700;
+            cursor: pointer; text-decoration: none;
+        }
+
+        .btn-back {
+            display: flex; align-items: center; gap: 8px;
+            background: #fff; color: var(--muted);
+            border: 1px solid var(--border); border-radius: 10px;
+            padding: 10px 16px; font-size: 14px; font-weight: 600;
+            cursor: pointer; text-decoration: none;
+        }
+
+        /* ── DOCUMENTO ── */
+        .documento {
+            background: #fff;
+            max-width: 800px;
+            margin: 0 auto;
             border-radius: 12px;
-            text-decoration: none;
-            transition: background 0.2s;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            overflow: hidden;
         }
 
-        .btn-back:hover { background: var(--surface2); }
-
-        /* ── DESTAQUE TOTAL GERAL ── */
-        .hero-section {
-            padding: 10px 20px 24px;
-        }
-
-        .total-card {
-            background: linear-gradient(145deg, var(--surface2), var(--surface));
-            border: 1px solid var(--border2);
-            border-radius: 24px;
-            padding: 30px 20px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        /* ── CAPA ── */
+        .capa {
+            background: linear-gradient(135deg, #0a0a0f 0%, #1c1c26 100%);
+            padding: 40px;
             position: relative;
             overflow: hidden;
         }
 
-        /* Efeito de brilho no fundo do card */
-        .total-card::before {
+        .capa::before {
             content: '';
-            position: absolute;
-            top: -50px; left: 50%;
-            transform: translateX(-50%);
-            width: 150px; height: 150px;
-            background: var(--green);
-            filter: blur(80px);
-            opacity: 0.15;
-            pointer-events: none;
+            position: absolute; top: -60px; right: -60px;
+            width: 200px; height: 200px;
+            background: rgba(124,110,247,0.15); border-radius: 50%;
         }
 
-        .total-label {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--muted2);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
+        .capa::after {
+            content: '';
+            position: absolute; bottom: -40px; left: 40px;
+            width: 120px; height: 120px;
+            background: rgba(34,197,94,0.1); border-radius: 50%;
+        }
+
+        .capa-top {
+            display: flex; justify-content: space-between;
+            align-items: flex-start; margin-bottom: 32px;
+        }
+
+        .capa-logo {
+            font-size: 18px; font-weight: 900;
+            color: #fff; letter-spacing: -0.5px;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .capa-logo-dot {
+            width: 10px; height: 10px;
+            background: #7c6ef7; border-radius: 50%;
+        }
+
+        .capa-badge {
+            background: rgba(245,158,11,0.2);
+            border: 1px solid rgba(245,158,11,0.4);
+            color: #f59e0b;
+            font-size: 11px; font-weight: 800;
+            padding: 4px 12px; border-radius: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .capa-title {
+            font-size: 13px; font-weight: 700;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase; letter-spacing: 2px;
             margin-bottom: 8px;
         }
 
-        .total-value {
-            font-size: 38px;
-            font-weight: 800;
-            color: var(--green);
-            letter-spacing: -1px;
+        .capa-nome {
+            font-size: 32px; font-weight: 900;
+            color: #fff; letter-spacing: -1px;
+            line-height: 1.1; margin-bottom: 16px;
         }
 
-        /* ── LISTA DE BARRACAS ── */
+        .capa-meta {
+            display: flex; gap: 20px; flex-wrap: wrap;
+        }
+
+        .capa-meta-item {
+            font-size: 13px; color: rgba(255,255,255,0.55);
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .capa-meta-item strong { color: rgba(255,255,255,0.85); }
+
+        /* ── CORPO DO RELATÓRIO ── */
+        .corpo { padding: 40px; }
+
+        /* ── SECTION ── */
+        .section { margin-bottom: 36px; }
+
         .section-header {
-            padding: 0 20px;
-            margin-bottom: 12px;
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 16px; padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
         }
 
-        .section-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
+        .section-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 800;
         }
 
-        .list-container {
+        .section-icon.purple { background: rgba(124,110,247,0.1); color: #7c6ef7; }
+        .section-icon.green  { background: rgba(34,197,94,0.1); color: #22c55e; }
+        .section-icon.gold   { background: rgba(245,158,11,0.1); color: #f59e0b; }
+        .section-icon.blue   { background: rgba(59,130,246,0.1); color: #3b82f6; }
+
+        .section-title { font-size: 15px; font-weight: 800; color: var(--text); }
+
+        /* ── MÉTRICAS GRID ── */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 500px) {
+            .metrics-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        .metric-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .metric-box-label {
+            font-size: 10px; font-weight: 700;
+            color: var(--muted); text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: 6px;
+        }
+
+        .metric-box-value {
+            font-size: 20px; font-weight: 900; color: var(--text);
+        }
+
+        .metric-box-value.green { color: #22c55e; }
+        .metric-box-value.purple { color: #7c6ef7; }
+        .metric-box-value.gold { color: #f59e0b; }
+
+        /* ── LUCRO BOX ── */
+        .lucro-box {
+            background: linear-gradient(135deg, rgba(34,197,94,0.05), rgba(124,110,247,0.05));
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .lucro-col { flex: 1; min-width: 120px; text-align: center; }
+
+        .lucro-col-label {
+            font-size: 11px; font-weight: 700;
+            color: var(--muted); text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: 6px;
+        }
+
+        .lucro-col-value { font-size: 22px; font-weight: 900; }
+        .lucro-col-value.green { color: #22c55e; }
+        .lucro-col-value.red { color: #ef4444; }
+        .lucro-col-value.purple { color: #7c6ef7; }
+
+        .lucro-col-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+        /* ── TABELA DE PRODUTOS ── */
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+        thead th {
+            background: var(--surface);
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 11px; font-weight: 700;
+            color: var(--muted); text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tbody td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:nth-child(even) td { background: var(--surface); }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center; justify-content: center;
+            width: 24px; height: 24px;
+            border-radius: 6px;
+            font-size: 11px; font-weight: 800;
+        }
+
+        .rank-1 { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .rank-2 { background: rgba(148,163,184,0.15); color: #94a3b8; }
+        .rank-3 { background: rgba(180,120,60,0.15); color: #b4783c; }
+
+        /* ── PEDIDOS RECENTES ── */
+        .pedido-row {
+            display: flex; justify-content: space-between;
+            align-items: center; padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .pedido-row:last-child { border-bottom: none; }
+
+        .pedido-id { color: var(--muted); font-size: 12px; }
+        .pedido-valor { font-weight: 700; color: #22c55e; }
+
+        .status-badge {
+            font-size: 10px; font-weight: 700;
+            padding: 3px 8px; border-radius: 4px;
+        }
+
+        .status-confirmado {
+            background: rgba(34,197,94,0.1); color: #22c55e;
+        }
+
+        /* ── AVALIAÇÕES ── */
+        .avaliacao-summary {
+            display: flex; align-items: center; gap: 20px;
+            background: var(--surface); border-radius: 12px;
+            padding: 16px 20px; margin-bottom: 16px;
+        }
+
+        .av-nota-big {
+            font-size: 40px; font-weight: 900; color: var(--text);
+            line-height: 1;
+        }
+
+        .stars { color: #f59e0b; font-size: 16px; letter-spacing: 2px; }
+        .av-count { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+        .av-bars { flex: 1; }
+
+        .av-bar-row {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 4px; font-size: 11px; color: var(--muted);
+        }
+
+        .av-bar-track {
+            flex: 1; height: 5px;
+            background: var(--border); border-radius: 3px; overflow: hidden;
+        }
+
+        .av-bar-fill { height: 100%; background: #f59e0b; border-radius: 3px; }
+
+        /* ── ASSINATURA ── */
+        .assinatura {
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 2px dashed var(--border);
+            display: flex; gap: 40px; flex-wrap: wrap;
+        }
+
+        .assina-col { flex: 1; min-width: 180px; }
+
+        .assina-linha {
+            border-bottom: 1px solid var(--text);
+            margin-bottom: 6px; height: 40px;
+        }
+
+        .assina-label {
+            font-size: 11px; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        /* ── RODAPÉ ── */
+        .rodape {
             background: var(--surface);
             border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .list-item {
+            padding: 16px 40px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
-            transition: background 0.15s;
+            font-size: 11px; color: var(--muted);
         }
 
-        .list-item:last-child { border-bottom: none; }
-        .list-item:hover { background: var(--surface2); }
-
-        .item-avatar {
-            width: 40px; height: 40px;
-            border-radius: 12px;
-            background: var(--surface2);
-            border: 1px solid var(--border2);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 15px; font-weight: 800;
-            color: var(--accent);
-            margin-right: 14px;
-            flex-shrink: 0;
-        }
-
-        .item-info { flex: 1; }
-        .item-name { font-size: 15px; font-weight: 700; color: var(--text); }
-        .item-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-        .item-value {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--text);
-            background: var(--surface2);
-            padding: 6px 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--muted);
-            font-size: 14px;
+        /* ── PRINT ── */
+        @media print {
+            body { background: #fff; padding: 0; }
+            .action-bar { display: none !important; }
+            .documento { box-shadow: none; border-radius: 0; }
+            .capa { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .rank-1, .rank-2, .rank-3 { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header-actions">
-        <a href="/" class="btn-back">← Voltar</a>
-    </div>
+<!-- BARRA DE AÇÃO (não imprime) -->
+<div class="action-bar">
+    <button class="btn-print" onclick="window.print()">
+        🖨️ Imprimir / Salvar PDF
+    </button>
+    <a href="{{ url_for('premium') }}" class="btn-back">← Voltar</a>
+</div>
 
-    <div class="hero-section">
-        <div class="total-card">
-            <div class="total-label">Volume Total da Feira</div>
-            <div class="total-value">R$ {{ "%.2f"|format(total_geral) }}</div>
-        </div>
-    </div>
+<!-- DOCUMENTO -->
+<div class="documento">
 
-    <div class="section-header">
-        <span class="section-title">Detalhamento por Unidade</span>
-    </div>
-
-    <div class="list-container">
-        {% for barraca in barracas %}
-        <div class="list-item">
-            <div class="item-avatar">{{ barraca.nome_barraca[0] }}</div>
-            
-            <div class="item-info">
-                <div class="item-name">{{ barraca.nome_barraca }}</div>
-                <div class="item-sub">Resp: {{ barraca.responsavel }}</div>
+    <!-- CAPA -->
+    <div class="capa">
+        <div class="capa-top">
+            <div class="capa-logo">
+                <div class="capa-logo-dot"></div>
+                SalesHub
             </div>
-            
-            <div class="item-value">
-                R$ {{ "%.2f"|format(barraca.vendas|sum(attribute='valor')) }}
+            <span class="capa-badge">RELATÓRIO PREMIUM</span>
+        </div>
+        <div class="capa-title">Relatório de Desempenho</div>
+        <div class="capa-nome">{{ barraca.nome_barraca }}</div>
+        <div class="capa-meta">
+            <div class="capa-meta-item">
+                📚 Turma: <strong>{{ barraca.turma }}</strong>
+            </div>
+            <div class="capa-meta-item">
+                👩‍🏫 Professor(a): <strong>{{ barraca.professor_responsavel }}</strong>
+            </div>
+            <div class="capa-meta-item">
+                👤 Responsável: <strong>{{ barraca.username }}</strong>
+            </div>
+            <div class="capa-meta-item">
+                📅 Gerado em: <strong>{{ data_geracao }}</strong>
             </div>
         </div>
-        {% else %}
-        <div class="empty-state">
-            Nenhuma venda registrada até o momento.
-        </div>
-        {% endfor %}
     </div>
+
+    <!-- CORPO -->
+    <div class="corpo">
+
+        <!-- 1. RESUMO FINANCEIRO -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon green">💰</div>
+                <div class="section-title">Resumo Financeiro</div>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-box">
+                    <div class="metric-box-label">Receita Total</div>
+                    <div class="metric-box-value green">R$ {{ "%.2f"|format(receita_total) }}</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-box-label">Lucro Estimado</div>
+                    <div class="metric-box-value purple">R$ {{ "%.2f"|format(lucro) }}</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-box-label">Ticket Médio</div>
+                    <div class="metric-box-value gold">R$ {{ "%.2f"|format(ticket_medio) }}</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-box-label">Vendas Realizadas</div>
+                    <div class="metric-box-value">{{ total_vendas }}</div>
+                </div>
+            </div>
+
+            <div class="lucro-box">
+                <div class="lucro-col">
+                    <div class="lucro-col-label">Receita Bruta</div>
+                    <div class="lucro-col-value green">R$ {{ "%.2f"|format(receita_total) }}</div>
+                    <div class="lucro-col-sub">Total arrecadado</div>
+                </div>
+                <div class="lucro-col">
+                    <div class="lucro-col-label">Custo Operacional</div>
+                    <div class="lucro-col-value red">R$ {{ "%.2f"|format(custo) }}</div>
+                    <div class="lucro-col-sub">Declarado pela equipe</div>
+                </div>
+                <div class="lucro-col">
+                    <div class="lucro-col-label">Lucro Líquido</div>
+                    <div class="lucro-col-value purple">R$ {{ "%.2f"|format(lucro) }}</div>
+                    <div class="lucro-col-sub">Margem: {{ "%.1f"|format(margem) }}%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. PRODUTOS -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon purple">📦</div>
+                <div class="section-title">Desempenho por Produto</div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Produto</th>
+                        <th>Qtd. Vendida</th>
+                        <th>Preço Unit.</th>
+                        <th>Receita Gerada</th>
+                        <th>% do Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in top_produtos %}
+                    <tr>
+                        <td>
+                            <span class="rank-badge rank-{{ loop.index if loop.index <= 3 else '' }}">
+                                {{ loop.index }}
+                            </span>
+                        </td>
+                        <td><strong>{{ p.nome }}</strong></td>
+                        <td>{{ p.quantidade }} un.</td>
+                        <td>R$ {{ "%.2f"|format(p.preco_unit) }}</td>
+                        <td style="color:#22c55e;font-weight:700;">R$ {{ "%.2f"|format(p.receita) }}</td>
+                        <td>
+                            {% if receita_total > 0 %}
+                            {{ "%.1f"|format((p.receita / receita_total) * 100) }}%
+                            {% else %}—{% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">
+                            Nenhum produto vendido ainda.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 3. PEDIDOS RECENTES -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon gold">🧾</div>
+                <div class="section-title">Últimos Pedidos Confirmados</div>
+            </div>
+
+            {% for p in pedidos_recentes %}
+            <div class="pedido-row">
+                <div>
+                    <div style="font-weight:600;">Pedido #{{ p.id }}</div>
+                    <div class="pedido-id">{{ p.data_hora.strftime('%d/%m/%Y às %H:%M') if p.data_hora else '—' }}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span class="status-badge status-confirmado">PAGO</span>
+                    <span class="pedido-valor">R$ {{ "%.2f"|format(p.valor_total) }}</span>
+                </div>
+            </div>
+            {% else %}
+            <p style="font-size:13px;color:var(--muted);text-align:center;padding:20px 0;">
+                Nenhum pedido confirmado.
+            </p>
+            {% endfor %}
+        </div>
+
+        <!-- 4. AVALIAÇÕES -->
+        {% if total_avaliacoes > 0 %}
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon blue">⭐</div>
+                <div class="section-title">Avaliações dos Clientes</div>
+            </div>
+
+            <div class="avaliacao-summary">
+                <div style="text-align:center;">
+                    <div class="av-nota-big">{{ media_nota or '—' }}</div>
+                    <div class="stars">
+                        {% for i in range(1, 6) %}
+                            {% if media_nota and i <= media_nota|round|int %}★{% else %}☆{% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="av-count">{{ total_avaliacoes }} avaliação{{ 'ões' if total_avaliacoes != 1 }}</div>
+                </div>
+                <div class="av-bars">
+                    {% for i in range(5, 0, -1) %}
+                    <div class="av-bar-row">
+                        <span>{{ i }}★</span>
+                        <div class="av-bar-track">
+                            <div class="av-bar-fill"
+                                 style="width: {{ ((distribuicao.get(i, 0) / total_avaliacoes) * 100)|int if total_avaliacoes > 0 else 0 }}%">
+                            </div>
+                        </div>
+                        <span>{{ distribuicao.get(i, 0) }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 5. EQUIPE -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon purple">👥</div>
+                <div class="section-title">Equipe da Barraca</div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Membro</th>
+                        <th>Função</th>
+                        <th>Criar Produtos</th>
+                        <th>Confirmar Pedidos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>{{ barraca.username }}</strong></td>
+                        <td>👑 Líder</td>
+                        <td>✅ Sim</td>
+                        <td>✅ Sim</td>
+                    </tr>
+                    {% for m in membros %}
+                    <tr>
+                        <td>{{ m.usuario.username }}</td>
+                        <td>Membro</td>
+                        <td>{{ '✅ Sim' if m.pode_criar_produto else '❌ Não' }}</td>
+                        <td>{{ '✅ Sim' if m.pode_confirmar_pedido else '❌ Não' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ASSINATURAS -->
+        <div class="assinatura">
+            <div class="assina-col">
+                <div class="assina-linha"></div>
+                <div class="assina-label">Assinatura do Responsável</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:4px;">{{ barraca.username }}</div>
+            </div>
+            <div class="assina-col">
+                <div class="assina-linha"></div>
+                <div class="assina-label">Assinatura do Professor(a)</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:4px;">{{ barraca.professor_responsavel }}</div>
+            </div>
+            <div class="assina-col">
+                <div class="assina-linha"></div>
+                <div class="assina-label">Data</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:4px;">___/___/______</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- RODAPÉ -->
+    <div class="rodape">
+        <span>📊 SalesHub Premium — Relatório Automático</span>
+        <span>{{ barraca.nome_barraca }} · {{ data_geracao }}</span>
+    </div>
+
 </div>
 
 </body>
