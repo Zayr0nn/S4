@@ -1150,16 +1150,6 @@ def toggle_destaque(id):
 def health():
     return 'OK', 200
     
-@app.route('/migrar_avaliacao')
-def migrar_avaliacao():
-    try:
-        # Adiciona a coluna 'fixado' na tabela 'avaliacao' (tipo booleano, padrão False)
-        db.session.execute(text("ALTER TABLE avaliacao ADD COLUMN fixado BOOLEAN DEFAULT FALSE;"))
-        db.session.commit()
-        return "Coluna 'fixado' adicionada à tabela de avaliações com sucesso!", 200
-    except Exception as e:
-        db.session.rollback()
-        return f"Erro na migração: {str(e)}", 500
         
 # --- INICIALIZAÇÃO ---
 def criar_admin_master():
